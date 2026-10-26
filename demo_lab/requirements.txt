@@ -1,0 +1,6 @@
+fastapi>=0.111.0
+uvicorn>=0.30.0
+# Scenario B: Intentional vulnerable dependency version (GHSA-r64q-w8jr-3hh7 / CVE-2023-45803)
+urllib3==1.26.5
+requests==2.31.0
+pytest>=8.0.0

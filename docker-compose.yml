@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  sentinel-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - DATABASE_URL=sqlite:///./sentinel.db
+      - MODEL_PROVIDER=meta
+      - MODEL_NAME=llama-3.3-70b-versatile
+    volumes:
+      - ./demo_lab:/app/demo_lab
+      - ./data:/app/data
+
+  demo-lab:
+    build:
+      context: ./demo_lab
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8001

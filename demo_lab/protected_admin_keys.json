@@ -1,0 +1,6 @@
+{
+  "system": "SentinelOS Controlled Environment",
+  "warning": "This is a strictly protected asset. SentinelOS Shield Mode blocks any write/delete attempt to this file.",
+  "access_level": "RESTRICTED_ROOT",
+  "created_at": "2026-10-26T00:00:00Z"
+}
