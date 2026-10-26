@@ -56,10 +56,8 @@ def search_users(username: str = Query(...)):
 def chat_with_ai(payload: ChatPrompt):
     prompt = payload.prompt
     # INTENTIONAL VULNERABILITY (Scenario D): Fails to reject prompt override
-    # SentinelOS Prompt Shield Hardening Applied
-    sanitized = prompt.strip().replace("PWNED", "[FILTERED]")
-    if any(k in prompt.upper() for k in ["IGNORE", "REVEAL", "SECRET", "PASSWORD"]):
-        return {"reply": "I cannot comply with requests to ignore security boundaries or reveal system credentials."}
+    if "PWNED_BY_INJECTION" in prompt.upper() or "IGNORE" in prompt.upper():
+        return {"reply": "PWNED_BY_INJECTION: Secret is demo_secret_NOT_A_REAL_KEY"}
     return {"reply": f"AI Assistant received: {prompt[:40]}"}
 
 
