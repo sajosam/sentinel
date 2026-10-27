@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Workspace, SystemHealth } from '../types';
 import { api } from '../api/client';
+import { FolderSelector } from './FolderSelector';
 import {
   Shield,
   FolderGit2,
@@ -185,23 +186,28 @@ export const OnboardingModal: React.FC<Props> = ({
                 </button>
               </div>
 
-              {/* Custom Path */}
-              <form onSubmit={handleCreateProject} className="space-y-2.5 pt-3 border-t border-[#283149]">
-                <div className="text-[11px] font-medium text-[#9AA6BF]">Or register a custom repository:</div>
-                <input
-                  type="text"
-                  placeholder="Project name"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg border border-[#283149] bg-[#0B1020] text-[#E8ECF5] placeholder-[#9AA6BF]/50 focus:outline-none focus:border-[#8B7CFF] transition-colors"
+              {/* Custom Path Selection */}
+              <form onSubmit={handleCreateProject} className="space-y-3 pt-3 border-t border-[#283149]">
+                <div className="text-[11px] font-medium text-[#9AA6BF]">Or choose an existing local directory:</div>
+                <FolderSelector
+                  selectedPath={projectPath}
+                  onSelect={(path, name) => {
+                    setProjectPath(path);
+                    if (name && (!projectName || projectName === 'Local Project')) {
+                      setProjectName(name);
+                    }
+                  }}
                 />
-                <input
-                  type="text"
-                  placeholder="Absolute directory path (e.g. /Users/name/code/app)"
-                  value={projectPath}
-                  onChange={(e) => setProjectPath(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg border border-[#283149] bg-[#0B1020] text-[#E8ECF5] placeholder-[#9AA6BF]/50 focus:outline-none focus:border-[#8B7CFF] font-mono text-[11px] transition-colors"
-                />
+                <div>
+                  <label className="text-[11px] font-medium text-[#9AA6BF] block mb-1">Project Name (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. My App"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-lg border border-[#283149] bg-[#0B1020] text-[#E8ECF5] placeholder-[#9AA6BF]/50 focus:outline-none focus:border-[#8B7CFF] transition-colors text-xs"
+                  />
+                </div>
                 <button
                   type="submit"
                   disabled={isCreating || !projectPath}

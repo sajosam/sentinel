@@ -11,6 +11,7 @@ import { api } from '../api/client';
 import { StatusBadge } from '../components/StatusBadge';
 import { GraphViewer } from '../components/GraphViewer';
 import { DiffViewer } from '../components/DiffViewer';
+import { FolderSelector } from '../components/FolderSelector';
 import {
   FolderGit2,
   Plus,
@@ -621,47 +622,67 @@ export const Projects: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Add Project Modal */}
+      {/* Add Project Modal with Visual Folder Selection */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="w-full max-w-md bg-[#141B2D] border border-[#283149] rounded-xl p-5 shadow-2xl space-y-4">
-            <h3 className="text-sm font-semibold text-[#E8ECF5]">Add Project</h3>
-            {errorMsg && (
-              <div className="p-2.5 rounded bg-rose-500/10 text-rose-300 border border-rose-500/30 text-xs">{errorMsg}</div>
-            )}
-            <form onSubmit={handleCreateWorkspace} className="space-y-3 text-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-xl bg-[#141B2D] border border-[#283149] rounded-2xl p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-[#283149]">
               <div>
-                <label className="text-[#9AA6BF] block mb-1 font-medium">Display Name</label>
+                <h3 className="text-sm font-semibold text-[#E8ECF5]">Register New Project</h3>
+                <p className="text-[11px] text-[#9AA6BF] mt-0.5">
+                  Select a local workspace directory for SentinelOS to monitor and protect.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="text-[#9AA6BF] hover:text-[#E8ECF5] p-1 rounded-lg hover:bg-[#1B243B] transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {errorMsg && (
+              <div className="p-2.5 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/30 text-xs">{errorMsg}</div>
+            )}
+
+            <form onSubmit={handleCreateWorkspace} className="space-y-4 text-xs">
+              <div>
+                <label className="text-[#9AA6BF] block mb-1.5 font-medium">1. Choose Project Directory</label>
+                <FolderSelector
+                  selectedPath={canonicalPath}
+                  onSelect={(path, name) => {
+                    setCanonicalPath(path);
+                    if (name && (!displayName || displayName === 'Project Workspace' || displayName === 'My Web App')) {
+                      setDisplayName(name);
+                    }
+                  }}
+                />
+              </div>
+
+              <div>
+                <label className="text-[#9AA6BF] block mb-1.5 font-medium">2. Display Name</label>
                 <input
                   type="text"
-                  placeholder="My Web App"
+                  placeholder="e.g. My Web App"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg border border-[#283149] bg-[#0B1020] text-[#E8ECF5] focus:outline-none focus:border-[#8B7CFF]"
+                  className="w-full px-3 py-2 rounded-lg border border-[#283149] bg-[#0B1020] text-[#E8ECF5] focus:outline-none focus:border-[#8B7CFF] transition-colors text-xs"
                 />
               </div>
-              <div>
-                <label className="text-[#9AA6BF] block mb-1 font-medium">Canonical Path (Absolute Directory)</label>
-                <input
-                  type="text"
-                  placeholder="/Users/username/projects/my-app"
-                  value={canonicalPath}
-                  onChange={(e) => setCanonicalPath(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg border border-[#283149] bg-[#0B1020] text-[#E8ECF5] focus:outline-none focus:border-[#8B7CFF] font-mono"
-                />
-              </div>
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#283149]">
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#283149]">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-3 py-1.5 rounded-lg border border-[#283149] bg-[#1B243B] text-[#E8ECF5] hover:bg-[#222D4A]"
+                  className="px-3.5 py-1.5 rounded-lg border border-[#283149] bg-[#1B243B] text-[#E8ECF5] hover:bg-[#222D4A] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || !canonicalPath}
-                  className="px-4 py-1.5 rounded-lg bg-[#8B7CFF] hover:bg-[#7A68FC] text-white font-semibold disabled:opacity-50"
+                  className="px-4 py-1.5 rounded-lg bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white font-medium disabled:opacity-50 transition-colors shadow-sm"
                 >
                   {isSubmitting ? 'Registering...' : 'Add Project'}
                 </button>

@@ -38,6 +38,32 @@ export const api = {
     const res = await fetch(`${API_BASE}/workspaces/${id}`);
     return res.json();
   },
+  browseDirectories: async (path?: string): Promise<{
+    current_path: string;
+    current_name: string;
+    parent_path: string | null;
+    folders: Array<{
+      name: string;
+      path: string;
+      is_git: boolean;
+      is_node: boolean;
+      is_python: boolean;
+    }>;
+    quick_locations: Array<{
+      name: string;
+      path: string;
+    }>;
+  }> => {
+    const url = path
+      ? `${API_BASE}/workspaces/browse-dirs?path=${encodeURIComponent(path)}`
+      : `${API_BASE}/workspaces/browse-dirs`;
+    const res = await fetch(url);
+    return res.json();
+  },
+  pickDirectoryNative: async (): Promise<{ success: boolean; path?: string; name?: string; error?: string }> => {
+    const res = await fetch(`${API_BASE}/workspaces/pick-dir`, { method: 'POST' });
+    return res.json();
+  },
 
   // Investigations
   listInvestigations: async (workspaceId?: string): Promise<Investigation[]> => {

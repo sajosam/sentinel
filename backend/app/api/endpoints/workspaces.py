@@ -84,6 +84,85 @@ def list_workspaces(db: Session = Depends(get_db)):
     return db.query(Workspace).order_by(Workspace.created_at.desc()).all()
 
 
+@router.get("/browse-dirs")
+def browse_directories(path: Optional[str] = None):
+    # Determine base directory
+    if path and path.strip():
+        target = Path(path).expanduser().resolve()
+    else:
+        target = Path.cwd().resolve()
+
+    if not target.exists() or not target.is_dir():
+        target = Path.home().resolve()
+
+    folders = []
+    try:
+        for item in sorted(target.iterdir(), key=lambda x: x.name.lower()):
+            if item.is_dir() and not item.name.startswith("."):
+                is_git = (item / ".git").exists()
+                is_node = (item / "package.json").exists()
+                is_python = (item / "requirements.txt").exists() or (item / "pyproject.toml").exists()
+                folders.append({
+                    "name": item.name,
+                    "path": str(item.resolve()),
+                    "is_git": is_git,
+                    "is_node": is_node,
+                    "is_python": is_python
+                })
+    except (PermissionError, OSError):
+        pass
+
+    parent_path = str(target.parent.resolve()) if target.parent != target else None
+
+    home = Path.home()
+    quick_locations = [
+        {"name": "Current Workspace", "path": str(Path.cwd().resolve())},
+    ]
+    if (Path.cwd() / "demo_lab").exists():
+        quick_locations.append({"name": "Demo Lab", "path": str((Path.cwd() / "demo_lab").resolve())})
+    quick_locations.append({"name": "Home (~)", "path": str(home.resolve())})
+
+    for loc in ["github", "Projects", "Desktop", "Documents", "Downloads", "code", "Development"]:
+        loc_path = home / loc
+        if loc_path.exists() and loc_path.is_dir():
+            quick_locations.append({"name": loc, "path": str(loc_path.resolve())})
+
+    return {
+        "current_path": str(target.resolve()),
+        "current_name": target.name or str(target.resolve()),
+        "parent_path": parent_path,
+        "folders": folders,
+        "quick_locations": quick_locations
+    }
+
+
+@router.post("/pick-dir")
+def pick_directory_native():
+    import sys
+    import subprocess
+    if sys.platform == "darwin":
+        try:
+            cmd = [
+                "osascript", "-e",
+                'POSIX path of (choose folder with prompt "Select Project Folder for SentinelOS:")'
+            ]
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+            if res.returncode == 0:
+                chosen = res.stdout.strip().rstrip("/")
+                if chosen and Path(chosen).is_dir():
+                    p = Path(chosen).resolve()
+                    return {
+                        "success": True,
+                        "path": str(p),
+                        "name": p.name
+                    }
+        except subprocess.TimeoutExpired:
+            return {"success": False, "error": "Folder selection timed out"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+    return {"success": False, "error": "Native picker not supported or cancelled"}
+
+
 @router.get("/{workspace_id}", response_model=WorkspaceResponse)
 def get_workspace(workspace_id: str, db: Session = Depends(get_db)):
     workspace = db.query(Workspace).filter(Workspace.id == workspace_id).first()
