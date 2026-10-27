@@ -13,16 +13,15 @@ import { Header } from './components/Header';
 import { Sidebar, NavTab } from './components/Sidebar';
 import { OnboardingModal } from './components/OnboardingModal';
 import { Overview } from './pages/Overview';
-import { Projects } from './pages/Projects';
-import { InvestigationCenter } from './pages/InvestigationCenter';
+import { InvestigationCenter, InvestigationSubTab } from './pages/InvestigationCenter';
 import { Findings } from './pages/Findings';
-import { ActivityAudit } from './pages/ActivityAudit';
 import { Settings } from './pages/Settings';
 import { ShieldAlert, X } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavTab>('overview');
-  const [projectSubTab, setProjectSubTab] = useState<string>('overview');
+  const [investigationSubTab, setInvestigationSubTab] = useState<InvestigationSubTab>('timeline');
+  const [selectedFindingId, setSelectedFindingId] = useState<string | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
   const [investigations, setInvestigations] = useState<Investigation[]>([]);
@@ -118,14 +117,15 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleStartInvestigation = async () => {
+  const handleStartInvestigation = async (goal?: string) => {
     if (!currentWorkspace) {
       setIsOnboardingOpen(true);
       return;
     }
     try {
-      await api.startInvestigation(currentWorkspace.id);
+      await api.startInvestigation(currentWorkspace.id, goal);
       setCurrentTab('investigations');
+      setInvestigationSubTab('timeline');
       refreshData();
     } catch (e) {
       console.error(e);
@@ -153,14 +153,15 @@ export const App: React.FC = () => {
   };
 
   const handleSelectFindingForFix = (finding: Finding) => {
-    setCurrentTab('projects');
-    setProjectSubTab('fix_verify');
+    setSelectedFindingId(finding.id);
+    setCurrentTab('investigations');
+    setInvestigationSubTab('fix_verify');
   };
 
   const handleNavigateWithSubTab = (tab: NavTab, subTab?: string) => {
     setCurrentTab(tab);
     if (subTab) {
-      setProjectSubTab(subTab);
+      setInvestigationSubTab(subTab as InvestigationSubTab);
     }
   };
 
@@ -183,7 +184,7 @@ export const App: React.FC = () => {
 
       {/* 2. Global Frame */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Narrow Sidebar */}
+        {/* Narrow Sidebar (Exactly 4 items) */}
         <Sidebar
           currentTab={currentTab}
           onSelectTab={(tab) => setCurrentTab(tab)}
@@ -208,29 +209,18 @@ export const App: React.FC = () => {
             />
           )}
 
-          {currentTab === 'projects' && (
-            <Projects
-              workspaces={workspaces}
-              currentWorkspace={currentWorkspace}
-              onSelectWorkspace={(ws) => setCurrentWorkspace(ws)}
-              findings={findings}
-              attackPaths={attackPaths}
-              shieldStatus={shieldStatus}
-              auditEvents={auditEvents}
-              investigations={investigations}
-              onStartAudit={handleStartInvestigation}
-              onTriggerPolicyBlock={handleTriggerPolicyBlock}
-              onResetDemo={handleResetDemo}
-              onRefresh={initApp}
-              initialSubTab={projectSubTab}
-            />
-          )}
-
           {currentTab === 'investigations' && (
             <InvestigationCenter
               currentInvestigation={currentInvestigation}
+              investigations={investigations}
+              findings={findings}
+              attackPaths={attackPaths}
+              auditEvents={auditEvents}
+              currentWorkspace={currentWorkspace}
               onRefresh={refreshData}
               onStartNew={handleStartInvestigation}
+              initialSubTab={investigationSubTab}
+              selectedFindingId={selectedFindingId}
             />
           )}
 
@@ -239,10 +229,6 @@ export const App: React.FC = () => {
               findings={findings}
               onSelectFindingForFix={handleSelectFindingForFix}
             />
-          )}
-
-          {currentTab === 'activity' && (
-            <ActivityAudit auditEvents={auditEvents} />
           )}
 
           {currentTab === 'settings' && (

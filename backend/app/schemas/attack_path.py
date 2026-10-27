@@ -30,6 +30,12 @@ class AttackPathResponse(BaseModel):
     name: str
     description: str
     risk_score: float
+    entry_point: Optional[str] = None
+    vulnerable_component: Optional[str] = None
+    possible_impact: Optional[str] = None
+    supporting_evidence: Optional[str] = None
+    confidence: Optional[str] = "HIGH"
+    recommended_next_check: Optional[str] = None
     created_at: datetime
     nodes: List[AttackPathNodeResponse] = Field(default_factory=list)
     edges: List[AttackPathEdgeResponse] = Field(default_factory=list)

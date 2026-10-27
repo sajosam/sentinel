@@ -2,7 +2,7 @@ import pytest
 import asyncio
 import subprocess
 from pathlib import Path
-from app.db.session import SessionLocal, Base, engine
+from app.db.session import SessionLocal, Base, engine, init_db
 from app.db.models import Workspace, Investigation, Finding, AttackPath
 from app.core.orchestrator import SentinelOrchestrator
 
@@ -17,7 +17,7 @@ def clean_demo():
 
 @pytest.mark.asyncio
 async def test_autonomous_investigation_workflow(clean_demo):
-    Base.metadata.create_all(bind=engine)
+    init_db()
     db = SessionLocal()
     try:
         ws = db.query(Workspace).filter(Workspace.canonical_path == str(clean_demo)).first()

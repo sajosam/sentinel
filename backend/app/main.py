@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.config import settings
-from app.db.session import engine, Base
+from app.db.session import engine, Base, init_db
 from app.api.api_v1 import api_router
 
 # Configure logging
@@ -18,7 +18,7 @@ logger = logging.getLogger("sentinelos")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Initializing SentinelOS local database schema...")
-    Base.metadata.create_all(bind=engine)
+    init_db()
     logger.info("SentinelOS Security Engine initialized and ready.")
     yield
     logger.info("SentinelOS shutting down.")

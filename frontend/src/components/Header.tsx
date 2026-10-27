@@ -5,7 +5,8 @@ import {
   RotateCcw,
   ShieldBan,
   HelpCircle,
-  FlaskConical
+  FlaskConical,
+  FolderPlus
 } from 'lucide-react';
 
 interface Props {
@@ -57,6 +58,16 @@ export const Header: React.FC<Props> = ({
             </option>
           ))}
         </select>
+
+        <button
+          type="button"
+          onClick={onOpenOnboarding}
+          title="Add or browse project folder"
+          className="px-2 py-1 rounded border border-[#283149] bg-[#0B1020] hover:bg-[#1B243B] text-[#9AA6BF] hover:text-[#E8ECF5] text-xs flex items-center gap-1 transition-colors"
+        >
+          <FolderPlus className="w-3.5 h-3.5 text-[#8B7CFF]" />
+          <span className="hidden md:inline">Open Folder</span>
+        </button>
 
         <div className="hidden sm:flex items-center gap-1.5 pl-3 border-l border-[#283149] text-xs text-[#9AA6BF]">
           <span className="w-1.5 h-1.5 rounded-full bg-[#36D6B0]" />

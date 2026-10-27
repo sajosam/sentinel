@@ -83,6 +83,16 @@ export const Settings: React.FC<Props> = ({ health }) => {
 
           <div className="p-4 flex items-center justify-between">
             <div>
+              <div className="font-medium text-[#E8ECF5]">AST Dataflow Tracer (code_flow_trace)</div>
+              <div className="text-[11px] text-[#9AA6BF] mt-0.5">Traces untrusted HTTP request parameters to query execution sinks across Python AST nodes.</div>
+            </div>
+            <span className="inline-flex items-center gap-1.5 text-[#36D6B0] font-medium bg-[#36D6B0]/10 px-2.5 py-1 rounded-md border border-[#36D6B0]/20">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Ready
+            </span>
+          </div>
+
+          <div className="p-4 flex items-center justify-between">
+            <div>
               <div className="font-medium text-[#E8ECF5]">Prompt Shield AI Tester</div>
               <div className="text-[11px] text-[#9AA6BF] mt-0.5">Probes application endpoints for prompt injection and simulated secret disclosure.</div>
             </div>
@@ -102,7 +112,7 @@ export const Settings: React.FC<Props> = ({ health }) => {
         <div className="border border-[#283149] rounded-xl bg-[#141B2D] p-5 space-y-3 text-xs shadow-sm">
           <div className="flex items-center justify-between py-2 border-b border-[#283149]">
             <span className="text-[#9AA6BF]">Maximum autonomous investigation steps</span>
-            <span className="font-mono font-medium text-[#E8ECF5]">12 steps</span>
+            <span className="font-mono font-medium text-[#E8ECF5]">14 steps (bounded closed-loop)</span>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-[#283149]">
             <span className="text-[#9AA6BF]">Per-tool execution timeout</span>

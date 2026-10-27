@@ -7,6 +7,7 @@ from app.tools.code_analyzer import CodeAnalyzerTool
 from app.tools.dependency_checker import DependencyCheckerTool
 from app.tools.prompt_shield_tester import PromptShieldTesterTool
 from app.tools.test_runner import TestRunnerTool
+from app.tools.flow_tracer import CodeFlowTracerTool
 from app.schemas.tool import ToolDefinition, ToolExecutionResult
 from app.core.policy_engine import PolicyEngine
 from app.core.audit_service import AuditService
@@ -21,6 +22,7 @@ class ToolRegistry:
         self.register(DependencyCheckerTool())
         self.register(PromptShieldTesterTool())
         self.register(TestRunnerTool())
+        self.register(CodeFlowTracerTool())
 
     def register(self, tool: BaseTool):
         self._tools[tool.tool_id] = tool

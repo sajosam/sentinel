@@ -170,6 +170,12 @@ class AttackPath(Base):
     name = Column(String(255), nullable=False)
     description = Column(Text, default="")
     risk_score = Column(Float, default=0.0)
+    entry_point = Column(String(255), nullable=True)
+    vulnerable_component = Column(String(255), nullable=True)
+    possible_impact = Column(Text, nullable=True)
+    supporting_evidence = Column(Text, nullable=True)
+    confidence = Column(String(32), default="HIGH")
+    recommended_next_check = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=utc_now)
 
     investigation = relationship("Investigation", back_populates="attack_paths")

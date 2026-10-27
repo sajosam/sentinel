@@ -1,20 +1,16 @@
 import React from 'react';
 import {
   LayoutDashboard,
-  FolderGit2,
   Terminal,
   Bug,
-  ScrollText,
   Settings,
   Shield
 } from 'lucide-react';
 
 export type NavTab =
   | 'overview'
-  | 'projects'
   | 'investigations'
   | 'findings'
-  | 'activity'
   | 'settings';
 
 interface Props {
@@ -31,10 +27,8 @@ export const Sidebar: React.FC<Props> = ({
 }) => {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'projects', label: 'Projects', icon: FolderGit2 },
     { id: 'investigations', label: 'Investigations', icon: Terminal },
     { id: 'findings', label: 'Findings', icon: Bug },
-    { id: 'activity', label: 'Activity', icon: ScrollText },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
 

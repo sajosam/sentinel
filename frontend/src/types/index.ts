@@ -107,6 +107,12 @@ export interface AttackPath {
   name: string;
   description: string;
   risk_score: number;
+  entry_point?: string;
+  vulnerable_component?: string;
+  possible_impact?: string;
+  supporting_evidence?: string;
+  confidence?: string;
+  recommended_next_check?: string;
   created_at: string;
   nodes: AttackPathNode[];
   edges: AttackPathEdge[];
