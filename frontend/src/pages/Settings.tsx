@@ -1,6 +1,6 @@
 import React from 'react';
 import { SystemHealth } from '../types';
-import { Settings as SettingsIcon, CheckCircle2, XCircle, Cpu, Shield, Database, Terminal } from 'lucide-react';
+import { CheckCircle2, Shield, Cpu, Lock } from 'lucide-react';
 
 interface Props {
   health: SystemHealth | null;
@@ -8,111 +8,113 @@ interface Props {
 
 export const Settings: React.FC<Props> = ({ health }) => {
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div>
-        <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-          <SettingsIcon className="w-5 h-5 text-sky-400" />
-          <span>Platform Settings & Engine Configuration</span>
-        </h2>
-        <p className="text-xs text-slate-400 mt-0.5">
-          Verify host scanner readiness, AI model gateway endpoints, and autonomous execution limits.
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* Page Header */}
+      <div className="pb-4 border-b border-slate-200">
+        <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Settings</h1>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Configure model providers, inspect local scanner paths, and review enforcement limits.
         </p>
       </div>
 
-      {/* Model Gateway Config Card */}
-      <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-4">
-        <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2 pb-2 border-b border-slate-800">
-          <Cpu className="w-4 h-4 text-sky-400" />
-          <span>AI Model Gateway (Meta Llama Hackathon Primary Model)</span>
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-          <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60">
-            <span className="text-[10px] text-slate-500 uppercase block mb-1">Provider</span>
-            <span className="text-slate-200 font-semibold">{health?.model_gateway?.provider || 'meta'}</span>
-          </div>
-
-          <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60">
-            <span className="text-[10px] text-slate-500 uppercase block mb-1">Active Model Identifier</span>
-            <span className="text-sky-400 font-semibold">{health?.model_gateway?.model_name || 'llama-3.3-70b-versatile'}</span>
-          </div>
-
-          <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 md:col-span-2">
-            <span className="text-[10px] text-slate-500 uppercase block mb-1">API Base Endpoint</span>
-            <span className="text-slate-300 truncate block">{health?.model_gateway?.base_url || 'https://api.groq.com/openai/v1'}</span>
-          </div>
+      {/* Group 1: AI Model Configuration */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+          <Cpu className="w-4 h-4 text-slate-500" />
+          <span>AI Model Gateway</span>
         </div>
-
-        <div className="p-3 rounded-xl border border-sky-900/40 bg-sky-950/20 text-xs text-sky-300">
-          <strong>Configurable Integration:</strong> SentinelOS connects via the official OpenAI client SDK to Meta's supported Llama 3.3 models. API credentials and base URLs are configured in local <code className="bg-slate-900 px-1 py-0.5 rounded border border-sky-900">.env</code> and redacted from all logs.
+        <div className="border border-slate-200 rounded-lg bg-white p-4 space-y-3 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="p-3 rounded bg-slate-50 border border-slate-200">
+              <span className="text-[11px] text-slate-500 block mb-0.5 font-medium">Provider</span>
+              <span className="font-semibold text-slate-900 capitalize">{health?.model_gateway?.provider || 'meta'}</span>
+            </div>
+            <div className="p-3 rounded bg-slate-50 border border-slate-200">
+              <span className="text-[11px] text-slate-500 block mb-0.5 font-medium">Model Identifier</span>
+              <span className="font-semibold text-slate-900 font-mono text-[11px]">{health?.model_gateway?.model_name || 'llama-3.3-70b-versatile'}</span>
+            </div>
+          </div>
+          <div className="p-3 rounded bg-slate-50 border border-slate-200">
+            <span className="text-[11px] text-slate-500 block mb-0.5 font-medium">Endpoint URL</span>
+            <span className="text-slate-700 font-mono text-[11px] break-all">{health?.model_gateway?.base_url || 'https://api.groq.com/openai/v1'}</span>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            Model parameters and API credentials are kept in your local <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">.env</code> configuration and are automatically redacted before logs are written or context is transmitted.
+          </p>
         </div>
       </div>
 
-      {/* Scanner Binaries Readiness */}
-      <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-4">
-        <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2 pb-2 border-b border-slate-800">
-          <Shield className="w-4 h-4 text-emerald-400" />
-          <span>Security Scanner Integrations Status</span>
-        </h3>
-
-        <div className="space-y-3">
-          {/* Gitleaks */}
-          <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 flex items-center justify-between text-xs">
+      {/* Group 2: Scanner Integrations */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+          <Shield className="w-4 h-4 text-slate-500" />
+          <span>Security Scanner Integrations</span>
+        </div>
+        <div className="border border-slate-200 rounded-lg bg-white divide-y divide-slate-100 text-xs">
+          <div className="p-3.5 flex items-center justify-between">
             <div>
-              <div className="font-semibold text-slate-200">Gitleaks (Secret Detector)</div>
-              <div className="text-[11px] text-slate-500 font-mono mt-0.5">{health?.scanners?.gitleaks?.path || '/opt/homebrew/bin/gitleaks'}</div>
+              <div className="font-medium text-slate-900">Gitleaks Secret Scanner</div>
+              <div className="text-[11px] text-slate-500">Detects exposed API keys, tokens, and credentials in source files and Git history.</div>
             </div>
-            <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
-              <CheckCircle2 className="w-4 h-4" /> Ready & Linked
+            <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Ready
             </span>
           </div>
 
-          {/* Semgrep */}
-          <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 flex items-center justify-between text-xs">
+          <div className="p-3.5 flex items-center justify-between">
             <div>
-              <div className="font-semibold text-slate-200">Semgrep (SAST Engine)</div>
-              <div className="text-[11px] text-slate-500 font-mono mt-0.5">{health?.scanners?.semgrep?.path || '/opt/homebrew/bin/semgrep'}</div>
+              <div className="font-medium text-slate-900">Semgrep SAST Engine</div>
+              <div className="text-[11px] text-slate-500">Static code analysis checking for SQL injection, command execution, and insecure inputs.</div>
             </div>
-            <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
-              <CheckCircle2 className="w-4 h-4" /> Ready & Linked
+            <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Ready
             </span>
           </div>
 
-          {/* OSV Scanner */}
-          <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 flex items-center justify-between text-xs">
+          <div className="p-3.5 flex items-center justify-between">
             <div>
-              <div className="font-semibold text-slate-200">OSV-Scanner (Supply Chain CVEs)</div>
-              <div className="text-[11px] text-slate-500 font-mono mt-0.5">{health?.scanners?.osv_scanner?.path || '/opt/homebrew/bin/osv-scanner'}</div>
+              <div className="font-medium text-slate-900">OSV-Scanner Dependency Auditor</div>
+              <div className="text-[11px] text-slate-500">Discovers requirements.txt and package.json manifests to detect known CVE vulnerabilities.</div>
             </div>
-            <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
-              <CheckCircle2 className="w-4 h-4" /> Ready & Linked
+            <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Ready
+            </span>
+          </div>
+
+          <div className="p-3.5 flex items-center justify-between">
+            <div>
+              <div className="font-medium text-slate-900">Prompt Shield AI Tester</div>
+              <div className="text-[11px] text-slate-500">Probes application endpoints for prompt injection and simulated secret disclosure.</div>
+            </div>
+            <span className="inline-flex items-center gap-1 text-emerald-700 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Ready
             </span>
           </div>
         </div>
       </div>
 
-      {/* Investigation Limits Card */}
-      <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-3 text-xs">
-        <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2 pb-2 border-b border-slate-800">
-          <Terminal className="w-4 h-4 text-slate-400" />
-          <span>Autonomous Execution Budget Limits</span>
-        </h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-slate-300">
-          <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-            <span className="text-[10px] text-slate-500 block uppercase">Max Tool Calls</span>
-            <span className="font-mono font-bold text-slate-100 text-sm">10 calls</span>
+      {/* Group 3: Policy Engine & Safety Limits */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+          <Lock className="w-4 h-4 text-slate-500" />
+          <span>AgentFence Safety Limits</span>
+        </div>
+        <div className="border border-slate-200 rounded-lg bg-white p-4 space-y-2 text-xs">
+          <div className="flex items-center justify-between py-1 border-b border-slate-100">
+            <span className="text-slate-600">Maximum autonomous investigation steps</span>
+            <span className="font-mono font-medium text-slate-900">12 steps</span>
           </div>
-          <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-            <span className="text-[10px] text-slate-500 block uppercase">Tool Timeout</span>
-            <span className="font-mono font-bold text-slate-100 text-sm">45s / tool</span>
+          <div className="flex items-center justify-between py-1 border-b border-slate-100">
+            <span className="text-slate-600">Per-tool execution timeout</span>
+            <span className="font-mono font-medium text-slate-900">45 seconds</span>
           </div>
-          <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-            <span className="text-[10px] text-slate-500 block uppercase">Graph Steps</span>
-            <span className="font-mono font-bold text-slate-100 text-sm">12 steps</span>
+          <div className="flex items-center justify-between py-1 border-b border-slate-100">
+            <span className="text-slate-600">Workspace boundary traversal guard</span>
+            <span className="font-medium text-emerald-700">Strictly Enforced (..)</span>
           </div>
-          <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800">
-            <span className="text-[10px] text-slate-500 block uppercase">Model Retries</span>
-            <span className="font-mono font-bold text-slate-100 text-sm">2 attempts</span>
+          <div className="flex items-center justify-between py-1">
+            <span className="text-slate-600">Sensitive file overwrite protection (.env, *.key)</span>
+            <span className="font-medium text-emerald-700">Shield Mode Deny</span>
           </div>
         </div>
       </div>

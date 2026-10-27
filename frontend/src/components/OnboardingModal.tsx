@@ -4,16 +4,13 @@ import { api } from '../api/client';
 import {
   Shield,
   FolderGit2,
-  Cpu,
   Lock,
   Play,
   CheckCircle2,
   AlertCircle,
   X,
   ArrowRight,
-  ArrowLeft,
-  Sparkles,
-  Layers
+  ArrowLeft
 } from 'lucide-react';
 
 interface Props {
@@ -31,7 +28,6 @@ export const OnboardingModal: React.FC<Props> = ({
   isOpen,
   onClose,
   health,
-  workspaces,
   currentWorkspace,
   onSelectWorkspace,
   onStartAudit,
@@ -88,69 +84,63 @@ export const OnboardingModal: React.FC<Props> = ({
     onStartAudit();
   };
 
-  const gitleaksReady = health?.scanners?.gitleaks?.installed ?? true;
-  const semgrepReady = health?.scanners?.semgrep?.installed ?? true;
-  const osvReady = health?.scanners?.osv_scanner?.installed ?? true;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-2xl bg-[#0b101c] border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-fadeIn">
+      <div className="w-full max-w-xl bg-white border border-slate-200 rounded-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
-              <Shield className="w-4 h-4" />
+        <div className="px-5 py-3.5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-slate-900 flex items-center justify-center text-white">
+              <Shield className="w-3.5 h-3.5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-slate-100">Quick Setup Guide</h2>
-              <p className="text-[11px] text-slate-400">Step {step} of 5</p>
+              <h2 className="text-xs font-semibold text-slate-900">Guided Setup</h2>
+              <p className="text-[10px] text-slate-500">Step {step} of 5</p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 p-1 rounded-lg hover:bg-slate-800 transition-colors"
+            className="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Step Progress Bar */}
-        <div className="w-full bg-slate-900 h-1">
+        {/* Progress Line */}
+        <div className="w-full bg-slate-100 h-0.5">
           <div
-            className="bg-sky-500 h-1 transition-all duration-300"
+            className="bg-slate-900 h-0.5 transition-all duration-300"
             style={{ width: `${(step / 5) * 100}%` }}
           />
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-5 flex-1">
+        <div className="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
           {/* STEP 1: Welcome to SentinelOS */}
           {step === 1 && (
-            <div className="space-y-4">
-              <div className="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 mx-auto mb-2">
-                <Sparkles className="w-6 h-6" />
+            <div className="space-y-4 text-center py-2">
+              <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 mx-auto">
+                <Shield className="w-5 h-5" />
               </div>
-              <div className="text-center space-y-1">
-                <h3 className="text-lg font-bold text-slate-100">Welcome to SentinelOS</h3>
-                <p className="text-xs text-sky-400 font-semibold uppercase tracking-wider">
-                  Build with AI. Stay in control.
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">Welcome to SentinelOS</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                  A local-first security platform for software developers using AI coding tools.
                 </p>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed text-center max-w-lg mx-auto">
-                AI coding tools (like Cursor, Claude Code, and Copilot) make coding fast, but can accidentally expose secrets, introduce vulnerabilities, or overwrite critical files.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 text-center space-y-1">
-                  <div className="text-sky-400 font-bold text-xs">1. Scan Automatically</div>
-                  <div className="text-[11px] text-slate-400 leading-snug">Discovers secrets, code bugs, and vulnerable packages.</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pt-2">
+                <div className="p-3 rounded border border-slate-200 bg-slate-50/60 space-y-1">
+                  <span className="font-semibold text-slate-900 block">1. Scan Automatically</span>
+                  <p className="text-[11px] text-slate-600">Discovers exposed secrets, code injection, and vulnerable dependencies.</p>
                 </div>
-                <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 text-center space-y-1">
-                  <div className="text-rose-400 font-bold text-xs">2. Guard Sensitive Files</div>
-                  <div className="text-[11px] text-slate-400 leading-snug">Blocks AI from editing files like .env or private keys.</div>
+                <div className="p-3 rounded border border-slate-200 bg-slate-50/60 space-y-1">
+                  <span className="font-semibold text-slate-900 block">2. Enforce Protection</span>
+                  <p className="text-[11px] text-slate-600">Blocks AI tools from overwriting .env or private key files.</p>
                 </div>
-                <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 text-center space-y-1">
-                  <div className="text-emerald-400 font-bold text-xs">3. Verify Real Fixes</div>
-                  <div className="text-[11px] text-slate-400 leading-snug">Reruns tests to prove fixes work before you commit.</div>
+                <div className="p-3 rounded border border-slate-200 bg-slate-50/60 space-y-1">
+                  <span className="font-semibold text-slate-900 block">3. Verify Real Fixes</span>
+                  <p className="text-[11px] text-slate-600">Reruns tests and scans to prove problems are resolved.</p>
                 </div>
               </div>
             </div>
@@ -160,76 +150,66 @@ export const OnboardingModal: React.FC<Props> = ({
           {step === 2 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-base font-bold text-slate-100">Select a Project Folder</h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Choose a project folder on your computer for SentinelOS to monitor and protect.
+                <h3 className="text-sm font-semibold text-slate-900">Select a Project</h3>
+                <p className="text-slate-500 mt-0.5">
+                  Choose a project folder on your computer for SentinelOS to protect.
                 </p>
               </div>
 
               {errorMsg && (
-                <div className="p-3 rounded-xl border border-rose-900 bg-rose-950/60 text-xs text-rose-300 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <div className="p-2.5 rounded bg-rose-50 text-rose-700 border border-rose-200 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
-              {/* Option A: Quick Demo Lab */}
-              <div className="p-4 rounded-xl border border-sky-500/40 bg-sky-950/20 space-y-2.5">
+              {/* Demo Project */}
+              <div className="p-3.5 rounded border border-slate-200 bg-slate-50/60 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-sky-300 flex items-center gap-2">
-                    <FolderGit2 className="w-4 h-4 text-sky-400" />
-                    Recommended: SentinelOS Security Lab (Demo)
+                  <span className="font-semibold text-slate-900 flex items-center gap-2">
+                    <FolderGit2 className="w-3.5 h-3.5 text-slate-600" />
+                    SentinelOS Security Lab (Demo Project)
                   </span>
-                  <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800">
-                    Instant Setup
-                  </span>
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">Recommended</span>
                 </div>
-                <p className="text-xs text-slate-300">
-                  Includes pre-configured synthetic vulnerabilities (secret leak, SQL injection, CVE, prompt injection) to safely explore all features in 2 minutes.
+                <p className="text-[11px] text-slate-600">
+                  Pre-configured with synthetic vulnerabilities to explore all features safely in minutes.
                 </p>
                 <button
                   type="button"
                   onClick={handleUseDemoProject}
                   disabled={isCreating}
-                  className="w-full py-2 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-sm"
+                  className="w-full py-1.5 rounded bg-slate-900 hover:bg-slate-800 text-white font-medium transition-colors"
                 >
-                  {isCreating ? 'Setting up...' : 'Use Security Lab Demo Target'}
+                  {isCreating ? 'Setting up...' : 'Use Demo Project'}
                 </button>
               </div>
 
-              {/* Option B: Custom Project */}
-              <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/60 space-y-3">
-                <div className="text-xs font-bold text-slate-300">Or enter a local project path:</div>
-                <form onSubmit={handleCreateProject} className="space-y-3">
-                  <div>
-                    <label className="text-[11px] text-slate-400 block mb-1">Project Name (optional)</label>
-                    <input
-                      type="text"
-                      placeholder="My Web App"
-                      value={projectName}
-                      onChange={(e) => setProjectName(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-800 bg-[#070b12] text-xs text-slate-200 focus:outline-none focus:border-sky-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] text-slate-400 block mb-1">Full Directory Path (absolute path)</label>
-                    <input
-                      type="text"
-                      placeholder="/Users/username/projects/my-app"
-                      value={projectPath}
-                      onChange={(e) => setProjectPath(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-lg border border-slate-800 bg-[#070b12] text-xs text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isCreating || !projectPath}
-                    className="w-full py-2 rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition-colors disabled:opacity-50"
-                  >
-                    Register Custom Project
-                  </button>
-                </form>
-              </div>
+              {/* Custom Path */}
+              <form onSubmit={handleCreateProject} className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="text-[11px] font-medium text-slate-600">Or register a custom repository:</div>
+                <input
+                  type="text"
+                  placeholder="Project name"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-400"
+                />
+                <input
+                  type="text"
+                  placeholder="Absolute directory path (e.g. /Users/name/code/app)"
+                  value={projectPath}
+                  onChange={(e) => setProjectPath(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-400 font-mono text-[11px]"
+                />
+                <button
+                  type="submit"
+                  disabled={isCreating || !projectPath}
+                  className="w-full py-1.5 rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 font-medium disabled:opacity-50"
+                >
+                  Register Project Path
+                </button>
+              </form>
             </div>
           )}
 
@@ -237,66 +217,47 @@ export const OnboardingModal: React.FC<Props> = ({
           {step === 3 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-base font-bold text-slate-100">Security Scanners & AI Model</h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  SentinelOS uses real host security tools and Meta's Llama 3.3 model to reason and verify.
+                <h3 className="text-sm font-semibold text-slate-900">Security Scanners & AI Model</h3>
+                <p className="text-slate-500 mt-0.5">
+                  SentinelOS uses host security tools and Meta's Llama 3.3 model.
                 </p>
               </div>
 
-              <div className="space-y-2.5">
-                {/* Gitleaks */}
-                <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-semibold text-slate-200 flex items-center gap-2">
-                      <span>Gitleaks Secret Scanner</span>
-                      <span className="text-[10px] font-mono text-slate-400">v8.x</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400">Scans code files and Git history for exposed API keys and tokens.</div>
+              <div className="border border-slate-200 rounded divide-y divide-slate-100">
+                <div className="p-2.5 flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-slate-900">Gitleaks Secret Scanner</span>
+                    <p className="text-[11px] text-slate-500">Detects exposed API keys and tokens in files.</p>
                   </div>
-                  <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-                    <CheckCircle2 className="w-4 h-4" /> Ready
+                  <span className="inline-flex items-center gap-1 text-emerald-700 font-medium text-[11px]">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Ready
                   </span>
                 </div>
-
-                {/* Semgrep */}
-                <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-semibold text-slate-200 flex items-center gap-2">
-                      <span>Semgrep SAST Code Analyzer</span>
-                      <span className="text-[10px] font-mono text-slate-400">v1.x</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400">Finds SQL injections, code vulnerabilities, and unsafe inputs.</div>
+                <div className="p-2.5 flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-slate-900">Semgrep SAST Engine</span>
+                    <p className="text-[11px] text-slate-500">Finds SQL injection and code vulnerabilities.</p>
                   </div>
-                  <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-                    <CheckCircle2 className="w-4 h-4" /> Ready
+                  <span className="inline-flex items-center gap-1 text-emerald-700 font-medium text-[11px]">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Ready
                   </span>
                 </div>
-
-                {/* OSV Scanner */}
-                <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-semibold text-slate-200 flex items-center gap-2">
-                      <span>OSV Dependency Scanner</span>
-                      <span className="text-[10px] font-mono text-slate-400">v2.x</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400">Checks package manifests for known supply-chain vulnerabilities.</div>
+                <div className="p-2.5 flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-slate-900">OSV Dependency Scanner</span>
+                    <p className="text-[11px] text-slate-500">Audits third-party packages against known CVEs.</p>
                   </div>
-                  <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-                    <CheckCircle2 className="w-4 h-4" /> Ready
+                  <span className="inline-flex items-center gap-1 text-emerald-700 font-medium text-[11px]">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Ready
                   </span>
                 </div>
-
-                {/* Meta Llama 3.3 */}
-                <div className="p-3 rounded-xl border border-sky-800/60 bg-sky-950/20 flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-semibold text-sky-200 flex items-center gap-2">
-                      <Cpu className="w-4 h-4 text-sky-400" />
-                      <span>Meta Llama 3.3 (70B)</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400">Plans investigations, reasons over evidence, and drafts patches.</div>
+                <div className="p-2.5 flex items-center justify-between">
+                  <div>
+                    <span className="font-medium text-slate-900">Meta Llama 3.3 Model</span>
+                    <p className="text-[11px] text-slate-500">Autonomous reasoning and patch drafting.</p>
                   </div>
-                  <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-                    <CheckCircle2 className="w-4 h-4" /> Active
+                  <span className="inline-flex items-center gap-1 text-emerald-700 font-medium text-[11px]">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Ready
                   </span>
                 </div>
               </div>
@@ -307,98 +268,68 @@ export const OnboardingModal: React.FC<Props> = ({
           {step === 4 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-base font-bold text-slate-100">Review Protection Rules</h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  AgentFence enforces these safety rules on any action performed through SentinelOS.
+                <h3 className="text-sm font-semibold text-slate-900">Protection Rules</h3>
+                <p className="text-slate-500 mt-0.5">
+                  AgentFence enforces these safety rules on actions performed in your projects.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-xl border border-rose-900/40 bg-rose-950/20 space-y-1.5">
-                  <div className="flex items-center gap-2 text-rose-300 font-bold text-xs">
-                    <Lock className="w-4 h-4 text-rose-400" />
-                    Locked Project Files
+                <div className="p-3 rounded border border-slate-200 bg-slate-50/60 space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-slate-900">
+                    <Lock className="w-3.5 h-3.5 text-slate-600" />
+                    <span>Locked Files</span>
                   </div>
-                  <p className="text-[11px] text-slate-300">
-                    Files like <code className="text-rose-300 font-mono">.env</code>, <code className="text-rose-300 font-mono">config.py</code>, and key files cannot be overwritten by automated agents without explicit approval.
+                  <p className="text-[11px] text-slate-600">
+                    <code className="font-mono">.env</code> and key files cannot be overwritten by tools without confirmation.
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-xl border border-rose-900/40 bg-rose-950/20 space-y-1.5">
-                  <div className="flex items-center gap-2 text-rose-300 font-bold text-xs">
-                    <Shield className="w-4 h-4 text-rose-400" />
-                    Boundary Protection
+                <div className="p-3 rounded border border-slate-200 bg-slate-50/60 space-y-1">
+                  <div className="flex items-center gap-1.5 font-semibold text-slate-900">
+                    <Shield className="w-3.5 h-3.5 text-slate-600" />
+                    <span>Boundary Guard</span>
                   </div>
-                  <p className="text-[11px] text-slate-300">
-                    Directory traversal (e.g. <code className="text-rose-300 font-mono">../</code> or <code className="text-rose-300 font-mono">/etc</code>) is strictly blocked. Tools run only within the approved workspace.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-xl border border-sky-900/40 bg-sky-950/20 space-y-1.5">
-                  <div className="flex items-center gap-2 text-sky-300 font-bold text-xs">
-                    <CheckCircle2 className="w-4 h-4 text-sky-400" />
-                    Non-Destructive Testing
-                  </div>
-                  <p className="text-[11px] text-slate-300">
-                    Security probes and prompt injection checks are isolated and non-destructive.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-xl border border-emerald-900/40 bg-emerald-950/20 space-y-1.5">
-                  <div className="flex items-center gap-2 text-emerald-300 font-bold text-xs">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    One-Click Rollback
-                  </div>
-                  <p className="text-[11px] text-slate-300">
-                    Every patch applied by SentinelOS can be undone with a single click if needed.
+                  <p className="text-[11px] text-slate-600">
+                    Directory traversal outside the workspace is strictly blocked.
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* STEP 5: Start First Investigation */}
+          {/* STEP 5: Start Investigation */}
           {step === 5 && (
-            <div className="space-y-4 text-center py-2">
-              <div className="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 mx-auto">
-                <Play className="w-7 h-7 fill-current ml-0.5" />
+            <div className="space-y-4 text-center py-4">
+              <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 mx-auto">
+                <Play className="w-5 h-5 fill-current ml-0.5" />
               </div>
-              <div className="space-y-1">
-                <h3 className="text-lg font-bold text-slate-100">Ready for Your First Scan!</h3>
-                <p className="text-xs text-slate-400 max-w-md mx-auto">
-                  SentinelOS will now inspect the project structure, coordinate Gitleaks, Semgrep, and OSV-Scanner, and present findings with verified evidence.
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">Ready to Scan</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  SentinelOS will run a multi-step investigation to discover any secrets, vulnerabilities, and dependencies.
                 </p>
               </div>
-
-              <div className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 max-w-sm mx-auto text-left text-xs space-y-1">
-                <div className="text-slate-400 text-[11px]">Active Workspace:</div>
-                <div className="font-semibold text-slate-200 truncate">
-                  {currentWorkspace?.display_name || 'SentinelOS Security Lab'}
-                </div>
-                <div className="text-[10px] text-slate-500 font-mono truncate">
-                  {currentWorkspace?.canonical_path || '/Users/mac/github/sential/demo_lab'}
-                </div>
-              </div>
-
               <button
+                type="button"
                 onClick={handleFinishAndScan}
-                className="w-full max-w-sm mx-auto py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20 glow-blue transition-all"
+                className="w-full max-w-xs mx-auto py-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white font-medium transition-colors"
               >
-                <Sparkles className="w-4 h-4 fill-current" />
-                <span>Launch Autonomous Scan</span>
+                Launch Investigation
               </button>
             </div>
           )}
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="px-6 py-4 border-t border-slate-800 flex items-center justify-between bg-slate-900/40">
+        <div className="px-5 py-3 border-t border-slate-200 flex items-center justify-between bg-slate-50/50">
           {step > 1 ? (
             <button
+              type="button"
               onClick={() => setStep(step - 1)}
-              className="px-3.5 py-1.5 rounded-lg border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-medium flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1 rounded border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 text-xs font-medium flex items-center gap-1"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
+              <ArrowLeft className="w-3 h-3" />
               <span>Back</span>
             </button>
           ) : (
@@ -407,11 +338,12 @@ export const OnboardingModal: React.FC<Props> = ({
 
           {step < 5 && (
             <button
+              type="button"
               onClick={() => setStep(step + 1)}
-              className="px-4 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+              className="px-3.5 py-1 rounded bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium flex items-center gap-1"
             >
               <span>Next</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3 h-3" />
             </button>
           )}
         </div>

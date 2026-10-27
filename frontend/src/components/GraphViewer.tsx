@@ -1,133 +1,170 @@
 import React, { useState } from 'react';
 import { AttackPath, AttackPathNode, AttackPathEdge } from '../types';
-import { ArrowRight, Database, FileCode, Key, Layers, Globe, AlertTriangle } from 'lucide-react';
+import { ArrowRight, Database, FileCode, Key, Layers, Globe, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 interface Props {
   attackPath: AttackPath;
 }
 
 export const GraphViewer: React.FC<Props> = ({ attackPath }) => {
-  const [selectedNode, setSelectedNode] = useState<AttackPathNode | null>(null);
-  const [selectedEdge, setSelectedEdge] = useState<AttackPathEdge | null>(null);
+  const [selectedNode, setSelectedNode] = useState<AttackPathNode | null>(attackPath.nodes[0] || null);
 
   const getNodeIcon = (type: string) => {
     switch (type) {
       case 'api_endpoint':
-        return <Globe className="w-4 h-4 text-sky-400" />;
+        return <Globe className="w-4 h-4 text-sky-600" />;
       case 'source_file':
-        return <FileCode className="w-4 h-4 text-emerald-400" />;
+        return <FileCode className="w-4 h-4 text-emerald-600" />;
       case 'secret':
-        return <Key className="w-4 h-4 text-amber-400" />;
+        return <Key className="w-4 h-4 text-amber-600" />;
       case 'database':
-        return <Database className="w-4 h-4 text-purple-400" />;
+        return <Database className="w-4 h-4 text-purple-600" />;
       case 'dependency':
-        return <Layers className="w-4 h-4 text-blue-400" />;
+        return <Layers className="w-4 h-4 text-blue-600" />;
       default:
-        return <AlertTriangle className="w-4 h-4 text-rose-400" />;
+        return <AlertTriangle className="w-4 h-4 text-rose-600" />;
     }
   };
 
+  const getLinearSteps = () => {
+    return [
+      {
+        step: 1,
+        title: 'Untrusted Entry Point',
+        desc: 'Attacker provides unvalidated input via query parameters or API payloads.',
+        target: attackPath.nodes.find(n => n.node_type === 'api_endpoint')?.label || 'HTTP Endpoint'
+      },
+      {
+        step: 2,
+        title: 'Vulnerable Execution Path',
+        desc: 'Application code processes input directly into database queries or commands without sanitization.',
+        target: attackPath.nodes.find(n => n.node_type === 'source_file')?.label || 'Application Handler'
+      },
+      {
+        step: 3,
+        title: 'Asset Impact',
+        desc: 'Database records, system credentials, or backend services are compromised.',
+        target: attackPath.nodes.find(n => n.node_type === 'database' || n.node_type === 'secret')?.label || 'Protected Data'
+      }
+    ];
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Narrative & Score Banner */}
-      <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/60 flex items-center justify-between">
+    <div className="space-y-6">
+      {/* Narrative & Score Bar */}
+      <div className="p-4 rounded-lg border border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-slate-100">{attackPath.name}</h3>
-          <p className="text-xs text-slate-400 mt-1 max-w-2xl">{attackPath.description}</p>
+          <h3 className="text-sm font-semibold text-slate-900">{attackPath.name}</h3>
+          <p className="text-xs text-slate-600 mt-0.5 max-w-2xl">{attackPath.description}</p>
         </div>
-        <div className="text-right">
-          <div className="text-xs uppercase tracking-wider text-slate-500 font-medium">Risk Score</div>
-          <div className="text-2xl font-bold text-rose-400">{attackPath.risk_score.toFixed(1)} <span className="text-xs text-slate-500">/ 10</span></div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-xs text-slate-500 font-medium">Risk Score:</span>
+          <span className="text-base font-bold text-slate-900">
+            {attackPath.risk_score.toFixed(1)} <span className="text-xs font-normal text-slate-500">/ 10</span>
+          </span>
         </div>
       </div>
 
-      {/* Visual Chain Progression */}
-      <div className="p-6 rounded-xl border border-slate-800 bg-[#080d17] overflow-x-auto">
-        <div className="flex items-center gap-3 min-w-max py-4">
-          {attackPath.nodes.map((node, index) => {
-            const edge = attackPath.edges.find(e => e.source_node_id === node.id || e.source_node_id === `node_${index + 1}`);
+      {/* Viewport-fitting Graph Progression (Wraps cleanly, no horizontal overflow) */}
+      <div className="space-y-2">
+        <div className="text-xs font-medium text-slate-500">Attack Chain Progression</div>
+        <div className="p-4 rounded-lg border border-slate-200 bg-white">
+          <div className="flex flex-wrap items-center gap-2">
+            {attackPath.nodes.map((node, index) => {
+              const isSelected = selectedNode?.id === node.id;
+              const isLast = index === attackPath.nodes.length - 1;
 
-            return (
-              <React.Fragment key={node.id}>
-                {/* Node Box */}
-                <div
-                  onClick={() => { setSelectedNode(node); setSelectedEdge(null); }}
-                  className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col items-center gap-2 min-w-[140px] text-center ${
-                    selectedNode?.id === node.id
-                      ? 'border-sky-500 bg-sky-950/40 glow-blue'
-                      : 'border-slate-800 bg-slate-900/90 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="p-2 rounded-lg bg-slate-800/80 border border-slate-700/60">
-                    {getNodeIcon(node.node_type)}
-                  </div>
-                  <span className="text-xs font-semibold text-slate-200">{node.label}</span>
-                  <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/50">
-                    {node.node_type}
-                  </span>
-                </div>
-
-                {/* Connecting Edge / Arrow */}
-                {index < attackPath.nodes.length - 1 && (
-                  <div
-                    onClick={() => { setSelectedEdge(edge || null); setSelectedNode(null); }}
-                    className="flex flex-col items-center px-1 cursor-pointer group"
+              return (
+                <React.Fragment key={node.id}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedNode(node)}
+                    className={`p-3 rounded-lg border text-left transition-all flex items-center gap-2.5 ${
+                      isSelected
+                        ? 'border-slate-900 bg-slate-50 shadow-sm'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
                   >
-                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded mb-1 border ${
-                      edge?.is_inferred
-                        ? 'bg-amber-950/50 text-amber-300 border-amber-800/50 border-dashed'
-                        : 'bg-slate-800 text-slate-300 border-slate-700'
-                    }`}>
-                      {edge ? edge.relation_type : 'reaches'}
-                      {edge?.is_inferred && ' (inferred)'}
-                    </span>
-                    <ArrowRight className="w-5 h-5 text-slate-500 group-hover:text-sky-400 transition-colors" />
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
+                    <div className="p-1.5 rounded bg-slate-100 flex-shrink-0">
+                      {getNodeIcon(node.node_type)}
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-slate-900 leading-tight truncate max-w-[150px]">
+                        {node.label}
+                      </div>
+                      <div className="text-[10px] text-slate-500 capitalize leading-tight mt-0.5">
+                        {node.node_type.replace(/_/g, ' ')}
+                      </div>
+                    </div>
+                  </button>
+
+                  {!isLast && (
+                    <ArrowRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Detail Inspector Drawer */}
-      {(selectedNode || selectedEdge) && (
-        <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/90 animate-fadeIn">
-          {selectedNode && (
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase text-sky-400 tracking-wider">
-                {getNodeIcon(selectedNode.node_type)}
-                <span>Node Inspector: {selectedNode.label}</span>
+      {/* Bottom Grid: Node Detail + Linear Path Narrative */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Selected Component Details */}
+        <div className="p-4 rounded-lg border border-slate-200 bg-white space-y-3">
+          <div className="text-xs font-semibold text-slate-900 flex items-center justify-between pb-2 border-b border-slate-100">
+            <span>Selected Component Details</span>
+            {selectedNode && (
+              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                {selectedNode.node_type}
+              </span>
+            )}
+          </div>
+
+          {selectedNode ? (
+            <div className="space-y-2 text-xs">
+              <div>
+                <span className="text-slate-500 text-[11px] block">Component Name</span>
+                <span className="font-semibold text-slate-900">{selectedNode.label}</span>
               </div>
-              <p className="mt-2 text-xs text-slate-300">
-                Type: <strong className="text-slate-100 font-mono">{selectedNode.node_type}</strong>
-              </p>
-              <div className="mt-2 text-xs text-slate-400 bg-slate-950 p-2.5 rounded border border-slate-800 font-mono">
-                Asset mapped by ThreatLens graph engine during codebase structural discovery.
-              </div>
-            </div>
-          )}
-          {selectedEdge && (
-            <div>
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase text-amber-400 tracking-wider">
-                <ArrowRight className="w-4 h-4" />
-                <span>Relationship Inspector: {selectedEdge.relation_type}</span>
-              </div>
-              <p className="mt-2 text-xs text-slate-300">
-                Classification: <strong className={selectedEdge.is_inferred ? 'text-amber-400' : 'text-emerald-400'}>
-                  {selectedEdge.is_inferred ? 'Inferred Architectural Relationship' : 'Confirmed Code Evidence'}
-                </strong>
-              </p>
-              {selectedEdge.evidence_reference && (
-                <div className="mt-2 text-xs text-slate-300 bg-slate-950 p-2.5 rounded border border-slate-800">
-                  <span className="text-slate-500 font-mono block text-[10px] uppercase mb-1">Supporting Evidence:</span>
-                  {selectedEdge.evidence_reference}
+              <div>
+                <span className="text-slate-500 text-[11px] block">Details & References</span>
+                <div className="p-2.5 rounded bg-slate-50 border border-slate-200 font-mono text-[11px] text-slate-700">
+                  {selectedNode.details && Object.keys(selectedNode.details).length > 0 ? (
+                    <pre className="whitespace-pre-wrap">
+                      {JSON.stringify(selectedNode.details, null, 2)}
+                    </pre>
+                  ) : (
+                    <span>Confirmed active in workspace environment.</span>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
+          ) : (
+            <p className="text-xs text-slate-500">Select a node above to inspect its details.</p>
           )}
         </div>
-      )}
+
+        {/* Linear Path Explanation */}
+        <div className="p-4 rounded-lg border border-slate-200 bg-white space-y-3">
+          <div className="text-xs font-semibold text-slate-900 pb-2 border-b border-slate-100">
+            Step-by-Step Exploit Explanation
+          </div>
+          <div className="space-y-2.5 text-xs">
+            {getLinearSteps().map((s) => (
+              <div key={s.step} className="flex items-start gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-semibold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                  {s.step}
+                </span>
+                <div>
+                  <div className="font-medium text-slate-900">{s.title}: <span className="font-mono text-slate-600 text-[11px]">{s.target}</span></div>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

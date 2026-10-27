@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AuditEvent } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
-import { ScrollText, Search, ShieldCheck, Filter } from 'lucide-react';
+import { Search, ScrollText } from 'lucide-react';
 
 interface Props {
   auditEvents: AuditEvent[];
@@ -26,94 +26,79 @@ export const ActivityAudit: React.FC<Props> = ({ auditEvents }) => {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Header and Filter Toolbar */}
-      <div className="p-4 rounded-xl border border-slate-800 bg-[#0b101c] flex flex-wrap items-center justify-between gap-4">
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* 1. Header & Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-            <ScrollText className="w-5 h-5 text-emerald-400" />
-            <span>Immutable Security Audit Log</span>
-          </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Append-only record of all investigation cycles, tool executions, and Policy Engine decisions with automatic secret redaction.
+          <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Activity Log</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Append-only record of all investigation cycles, scanner runs, and policy decisions.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Search */}
           <div className="relative min-w-[200px]">
-            <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" />
             <input
               type="text"
-              placeholder="Search audit events..."
+              placeholder="Search activity..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500"
+              className="bg-white border border-slate-200 rounded-md pl-8 pr-2.5 py-1 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400 w-full"
             />
           </div>
 
           {/* Decision Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 font-medium">Decision:</span>
-            <select
-              value={filterDecision}
-              onChange={(e) => setFilterDecision(e.target.value)}
-              className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
-            >
-              <option value="ALL">All Decisions</option>
-              <option value="ALLOW">Allowed</option>
-              <option value="DENY">Blocked (Deny)</option>
-              <option value="REQUIRE_APPROVAL">Require Approval</option>
-            </select>
-          </div>
+          <select
+            value={filterDecision}
+            onChange={(e) => setFilterDecision(e.target.value)}
+            className="bg-white border border-slate-200 rounded-md px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:border-slate-400"
+          >
+            <option value="ALL">All Decisions</option>
+            <option value="DENY">Blocked Actions</option>
+            <option value="ALLOW">Allowed Actions</option>
+            <option value="REQUIRE_APPROVAL">Needs Approval</option>
+          </select>
         </div>
       </div>
 
-      {/* Audit Events Table */}
-      <div className="rounded-xl border border-slate-800 bg-[#0b101c] overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-900/90 text-slate-400 uppercase text-[10px] font-semibold border-b border-slate-800 tracking-wider">
-              <tr>
-                <th className="py-3 px-4">Timestamp</th>
-                <th className="py-3 px-4">Decision</th>
-                <th className="py-3 px-4">Action</th>
-                <th className="py-3 px-4">Source</th>
-                <th className="py-3 px-4">Justification & Details</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60 font-mono">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500 font-sans text-xs">
-                    No audit records match the current filters.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((evt) => (
-                  <tr key={evt.id} className="hover:bg-slate-900/40 transition-colors">
-                    <td className="py-3 px-4 text-slate-400 whitespace-nowrap text-[11px]">
-                      {new Date(evt.created_at).toLocaleTimeString()}
-                    </td>
-                    <td className="py-3 px-4 whitespace-nowrap font-sans">
-                      <StatusBadge type="decision" value={evt.decision} />
-                    </td>
-                    <td className="py-3 px-4 text-slate-200 font-semibold text-[11px] whitespace-nowrap">
-                      {evt.action}
-                    </td>
-                    <td className="py-3 px-4 text-slate-400 text-[11px] whitespace-nowrap">
-                      {evt.source}
-                    </td>
-                    <td className="py-3 px-4 text-slate-300 font-sans text-xs max-w-lg leading-relaxed">
-                      {evt.reason}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* 2. Activity Table */}
+      {filtered.length === 0 ? (
+        <div className="p-12 text-center text-xs text-slate-500 rounded-lg border border-slate-200 bg-white">
+          No activity events recorded with the selected filters.
         </div>
-      </div>
+      ) : (
+        <div className="border border-slate-200 rounded-lg bg-white divide-y divide-slate-100">
+          {filtered.map((evt) => (
+            <div key={evt.id} className="p-3.5 flex items-start justify-between gap-4 text-xs hover:bg-slate-50/60 transition-colors">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className="mt-0.5 flex-shrink-0">
+                  <StatusBadge type="decision" value={evt.decision} />
+                </div>
+                <div className="space-y-0.5 min-w-0">
+                  <div className="font-mono text-slate-900 text-xs truncate">
+                    {evt.action}
+                  </div>
+                  <p className="text-slate-600 text-xs leading-snug">
+                    {evt.reason}
+                  </p>
+                  <div className="text-[11px] text-slate-400 font-mono flex items-center gap-2">
+                    <span>Source: {evt.source}</span>
+                    <span>•</span>
+                    <span>Type: {evt.event_type}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-right flex-shrink-0 text-slate-400 font-mono text-[11px]">
+                <div>{new Date(evt.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>
+                <div className="text-[10px] text-slate-400">{new Date(evt.created_at).toLocaleDateString()}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

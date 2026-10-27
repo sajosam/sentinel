@@ -18,7 +18,7 @@ import { InvestigationCenter } from './pages/InvestigationCenter';
 import { Findings } from './pages/Findings';
 import { ActivityAudit } from './pages/ActivityAudit';
 import { Settings } from './pages/Settings';
-import { ShieldAlert, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, X } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavTab>('overview');
@@ -32,8 +32,7 @@ export const App: React.FC = () => {
   const [shieldStatus, setShieldStatus] = useState<ShieldStatus | null>(null);
   const [health, setHealth] = useState<SystemHealth | null>(null);
 
-  const [selectedFindingForFix, setSelectedFindingForFix] = useState<Finding | null>(null);
-  const [policyNotification, setPolicyNotification] = useState<any | null>(null);
+  const [policyToast, setPolicyToast] = useState<any | null>(null);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
 
   // Load initial application data
@@ -48,7 +47,6 @@ export const App: React.FC = () => {
 
       let wsList = await api.listWorkspaces();
       if (wsList.length === 0) {
-        // Automatically register SentinelOS Security Lab demo workspace if empty
         await api.setupDemo();
         wsList = await api.listWorkspaces();
       }
@@ -90,6 +88,16 @@ export const App: React.FC = () => {
     };
   }, [currentWorkspace]);
 
+  // Auto-dismiss policy toast after 7 seconds
+  useEffect(() => {
+    if (policyToast) {
+      const timer = setTimeout(() => {
+        setPolicyToast(null);
+      }, 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [policyToast]);
+
   const refreshData = async () => {
     if (!currentWorkspace) return;
     try {
@@ -127,7 +135,7 @@ export const App: React.FC = () => {
   const handleTriggerPolicyBlock = async () => {
     try {
       const res = await api.triggerPolicyViolation();
-      setPolicyNotification(res);
+      setPolicyToast(res);
       refreshData();
     } catch (e: any) {
       console.error(e);
@@ -138,14 +146,13 @@ export const App: React.FC = () => {
     try {
       await api.resetDemo();
       await refreshData();
-      alert('SentinelOS Security Lab files and database reset to initial vulnerable state.');
+      alert('Security Lab files and database reset to initial vulnerable state.');
     } catch (e) {
       console.error(e);
     }
   };
 
   const handleSelectFindingForFix = (finding: Finding) => {
-    setSelectedFindingForFix(finding);
     setCurrentTab('projects');
     setProjectSubTab('fix_verify');
   };
@@ -163,59 +170,28 @@ export const App: React.FC = () => {
     : false;
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#080c14] text-slate-100 overflow-hidden font-sans">
-      {/* Top Application Header */}
+    <div className="flex flex-col h-screen w-screen bg-white text-slate-900 overflow-hidden font-sans antialiased">
+      {/* 1. Compact Header */}
       <Header
         workspaces={workspaces}
         currentWorkspace={currentWorkspace}
         onSelectWorkspace={(ws) => setCurrentWorkspace(ws)}
-        onStartInvestigation={handleStartInvestigation}
         onTriggerPolicyBlock={handleTriggerPolicyBlock}
         onResetDemo={handleResetDemo}
         onOpenOnboarding={() => setIsOnboardingOpen(true)}
-        isInvestigating={isInvestigating}
       />
 
-      {/* Main Frame */}
+      {/* 2. Global Frame */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Simplified Left Sidebar (6 items) */}
+        {/* Narrow Sidebar */}
         <Sidebar
           currentTab={currentTab}
           onSelectTab={(tab) => setCurrentTab(tab)}
-          unresolvedCount={findings.filter((f) => f.verification_status !== 'verified_fixed').length}
-          blockedCount={shieldStatus?.metrics?.blocked_actions || 0}
-          isInvestigating={isInvestigating}
         />
 
-        {/* Content Body */}
-        <main className="flex-1 overflow-y-auto p-6 bg-[#080c14]">
-          {/* Policy Notification Toast */}
-          {policyNotification && (
-            <div className="mb-6 p-4 rounded-xl border border-rose-600 bg-rose-950/80 text-rose-200 flex items-start justify-between animate-fadeIn shadow-lg glow-red">
-              <div className="flex items-start gap-3">
-                <ShieldAlert className="w-5 h-5 text-rose-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <div className="text-xs font-bold uppercase tracking-wider text-rose-300">
-                    Host Protection Triggered: {policyNotification.scenario}
-                  </div>
-                  <p className="text-xs mt-1 text-slate-200 font-sans">
-                    {policyNotification.reason}
-                  </p>
-                  <div className="mt-1 text-[11px] font-mono text-rose-400">
-                    Decision: <strong>{policyNotification.decision}</strong> • Target: {policyNotification.target}
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setPolicyNotification(null)}
-                className="text-rose-400 hover:text-rose-200 text-sm ml-4 font-bold"
-              >
-                &times;
-              </button>
-            </div>
-          )}
-
-          {/* 1. Overview Page */}
+        {/* Main Content Area */}
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50/40">
+          {/* Active Tab View */}
           {currentTab === 'overview' && (
             <Overview
               workspaces={workspaces}
@@ -226,15 +202,12 @@ export const App: React.FC = () => {
               investigations={investigations}
               isInvestigating={isInvestigating}
               onStartAudit={handleStartInvestigation}
-              onTriggerPolicyBlock={handleTriggerPolicyBlock}
-              onResetDemo={handleResetDemo}
               onOpenOnboarding={() => setIsOnboardingOpen(true)}
               onNavigateToTab={handleNavigateWithSubTab}
               onSelectFindingForFix={handleSelectFindingForFix}
             />
           )}
 
-          {/* 2. Projects Hub (consolidating Workspaces, Protection, Attack Paths, Fix & Verify) */}
           {currentTab === 'projects' && (
             <Projects
               workspaces={workspaces}
@@ -253,7 +226,6 @@ export const App: React.FC = () => {
             />
           )}
 
-          {/* 3. Investigations Center */}
           {currentTab === 'investigations' && (
             <InvestigationCenter
               currentInvestigation={currentInvestigation}
@@ -262,7 +234,6 @@ export const App: React.FC = () => {
             />
           )}
 
-          {/* 4. Findings Center */}
           {currentTab === 'findings' && (
             <Findings
               findings={findings}
@@ -270,19 +241,44 @@ export const App: React.FC = () => {
             />
           )}
 
-          {/* 5. Activity & Audit Feed */}
           {currentTab === 'activity' && (
             <ActivityAudit auditEvents={auditEvents} />
           )}
 
-          {/* 6. Settings */}
           {currentTab === 'settings' && (
             <Settings health={health} />
           )}
         </main>
       </div>
 
-      {/* 5-Step Guided Onboarding Setup Modal */}
+      {/* Temporary Toast Notification for Policy Denial Events */}
+      {policyToast && (
+        <div className="fixed bottom-5 right-5 z-50 p-4 rounded-lg border border-slate-200 bg-white shadow-xl text-slate-900 max-w-sm space-y-1.5 animate-fadeIn">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+              <span className="text-xs font-semibold text-slate-900">
+                Action Blocked: Policy Denial
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPolicyToast(null)}
+              className="text-slate-400 hover:text-slate-600 p-0.5"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <p className="text-xs text-slate-600 leading-snug">
+            {policyToast.reason}
+          </p>
+          <div className="text-[11px] text-slate-400 font-mono truncate">
+            Target: {policyToast.target}
+          </div>
+        </div>
+      )}
+
+      {/* Guided Setup Modal */}
       <OnboardingModal
         isOpen={isOnboardingOpen}
         onClose={() => setIsOnboardingOpen(false)}

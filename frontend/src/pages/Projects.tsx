@@ -16,21 +16,17 @@ import {
   Plus,
   Play,
   Lock,
-  Calendar,
   CheckCircle2,
-  Layers,
-  Shield,
+  ShieldCheck,
   ShieldAlert,
-  ShieldBan,
   Bug,
   Network,
   Wrench,
   ScrollText,
-  AlertTriangle,
-  RotateCcw,
   Sparkles,
-  ExternalLink,
-  Undo2
+  Undo2,
+  ArrowRight,
+  ShieldBan
 } from 'lucide-react';
 
 interface Props {
@@ -59,7 +55,6 @@ export const Projects: React.FC<Props> = ({
   attackPaths,
   shieldStatus,
   auditEvents,
-  investigations,
   onStartAudit,
   onTriggerPolicyBlock,
   onResetDemo,
@@ -81,7 +76,6 @@ export const Projects: React.FC<Props> = ({
   const [isFixing, setIsFixing] = useState<boolean>(false);
   const [isApplying, setIsApplying] = useState<boolean>(false);
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
-  const [verificationResult, setVerificationResult] = useState<any | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const selectedFinding = findings.find((f) => f.id === selectedFindingId) || findings[0] || null;
@@ -164,7 +158,6 @@ export const Projects: React.FC<Props> = ({
     setIsVerifying(true);
     try {
       const res = await api.verifyFix(selectedFinding.id);
-      setVerificationResult(res);
       setActionMessage(`Verification complete: Status = ${res.status} (${res.message || ''})`);
       onRefresh();
     } catch (e: any) {
@@ -189,222 +182,440 @@ export const Projects: React.FC<Props> = ({
   const openFindingsCount = findings.filter((f) => f.verification_status !== 'verified_fixed').length;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Top Project Selector & Header */}
-      <div className="p-6 rounded-2xl border border-slate-800 bg-[#0b101c] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800">
-              Project Hub
-            </span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Protection: Active & Enforcing
-            </span>
+    <div className="max-w-5xl mx-auto space-y-8">
+      {/* 1. Projects List Table */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+          <div>
+            <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Projects</h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Workspaces registered under SentinelOS boundary monitoring and policy enforcement.
+            </p>
           </div>
-          <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            <FolderGit2 className="w-5 h-5 text-sky-400" />
-            <span>{currentWorkspace?.display_name || 'No Project Selected'}</span>
-          </h1>
-          <p className="text-xs text-slate-400 font-mono">
-            Path: {currentWorkspace?.canonical_path || 'None'}
-          </p>
-        </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2.5">
           <button
+            type="button"
             onClick={() => setShowAddModal(true)}
-            className="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition-colors"
+            className="px-3.5 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Project</span>
           </button>
-
-          <button
-            onClick={onStartAudit}
-            className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-lg shadow-sky-500/10 glow-blue transition-all"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>Run Investigation</span>
-          </button>
         </div>
-      </div>
 
-      {/* Workspace Switcher Tabs */}
-      {workspaces.length > 1 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          <span className="text-xs text-slate-500 font-medium mr-1">Switch Project:</span>
-          {workspaces.map((ws) => (
-            <button
-              key={ws.id}
-              onClick={() => onSelectWorkspace(ws)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                currentWorkspace?.id === ws.id
-                  ? 'bg-sky-500/10 text-sky-400 border border-sky-500/30 font-semibold'
-                  : 'bg-slate-900/60 text-slate-400 border border-slate-800 hover:text-slate-200'
-              }`}
-            >
-              {ws.display_name}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Sub-Navigation Tabs */}
-      <div className="border-b border-slate-800 flex items-center gap-1 overflow-x-auto">
-        {[
-          { id: 'overview', label: 'Overview', icon: FolderGit2 },
-          { id: 'findings', label: 'Findings', icon: Bug, count: openFindingsCount },
-          { id: 'protection', label: 'Protection (Shield Mode)', icon: Shield, badge: shieldStatus?.metrics.blocked_actions ? `${shieldStatus.metrics.blocked_actions} Blocked` : undefined },
-          { id: 'attack_paths', label: 'Attack Paths', icon: Network },
-          { id: 'fix_verify', label: 'Fix & Verify', icon: Wrench },
-          { id: 'activity', label: 'Activity', icon: ScrollText }
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as ProjectSubTab)}
-              className={`px-4 py-2.5 text-xs font-medium border-b-2 flex items-center gap-2 transition-all ${
-                isActive
-                  ? 'border-sky-500 text-sky-400 bg-sky-500/5 font-semibold'
-                  : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              <span>{tab.label}</span>
-              {tab.count !== undefined && tab.count > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-semibold bg-rose-950 text-rose-300 border border-rose-900">
-                  {tab.count}
-                </span>
-              )}
-              {tab.badge && (
-                <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-rose-950 text-rose-300 border border-rose-900">
-                  {tab.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* SUB-TAB 1: Overview */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                Project Profile
-              </span>
-              <div className="space-y-2 text-xs">
-                <div>
-                  <span className="text-slate-500 block text-[11px]">Type:</span>
-                  <span className="font-mono text-slate-200 uppercase">{currentWorkspace?.project_type || 'Unknown'}</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[11px]">Last Investigation:</span>
-                  <span className="text-slate-300">
-                    {currentWorkspace?.last_analyzed_at
-                      ? new Date(currentWorkspace.last_analyzed_at).toLocaleString()
-                      : 'Never'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[11px]">Boundary Path:</span>
-                  <span className="font-mono text-slate-300 break-all text-[11px]">{currentWorkspace?.canonical_path}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                Protected Project Files
-              </span>
-              <p className="text-[11px] text-slate-400">
-                AgentFence blocks automated tools from modifying these sensitive files:
-              </p>
-              <div className="space-y-1.5">
-                {(currentWorkspace?.protected_paths || ['.env', 'config.py', 'protected_admin_keys.json']).map((p, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs font-mono text-rose-300">
-                    <Lock className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
-                    <span>{p}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-3">
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                Enabled Security Scanners
-              </span>
-              <div className="space-y-2 text-xs">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-                  <span className="text-slate-300">Secrets (Gitleaks)</span>
-                  <span className="text-[10px] font-mono text-emerald-400">ENABLED</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-                  <span className="text-slate-300">Code Analysis (Semgrep)</span>
-                  <span className="text-[10px] font-mono text-emerald-400">ENABLED</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-                  <span className="text-slate-300">Dependencies (OSV-Scanner)</span>
-                  <span className="text-[10px] font-mono text-emerald-400">ENABLED</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-                  <span className="text-slate-300">AI Prompt Shield</span>
-                  <span className="text-[10px] font-mono text-emerald-400">ENABLED</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 2: Findings */}
-      {activeTab === 'findings' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-100">Project Security Findings ({findings.length})</h3>
-            <span className="text-xs text-slate-400 font-mono">{openFindingsCount} Unresolved</span>
-          </div>
-
-          {findings.length === 0 ? (
-            <div className="p-12 text-center text-xs text-slate-500 rounded-xl border border-dashed border-slate-800">
-              No findings detected. Run an autonomous investigation to scan the project.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {findings.map((f) => (
-                <div
-                  key={f.id}
-                  className="p-4 rounded-xl border border-slate-800 bg-[#0b101c] space-y-2 hover:border-slate-700 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
+        {/* Project Table */}
+        <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-medium">
+              <tr>
+                <th className="py-2.5 px-4 font-medium">Project Name</th>
+                <th className="py-2.5 px-4 font-medium hidden sm:table-cell">Directory Path</th>
+                <th className="py-2.5 px-4 font-medium">Protection</th>
+                <th className="py-2.5 px-4 font-medium">Open Risks</th>
+                <th className="py-2.5 px-4 font-medium hidden md:table-cell">Last Scan</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {workspaces.map((ws) => {
+                const isSelected = currentWorkspace?.id === ws.id;
+                return (
+                  <tr
+                    key={ws.id}
+                    onClick={() => onSelectWorkspace(ws)}
+                    className={`cursor-pointer transition-colors ${
+                      isSelected ? 'bg-slate-50 font-medium' : 'hover:bg-slate-50/70'
+                    }`}
+                  >
+                    <td className="py-2.5 px-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <StatusBadge type="severity" value={f.severity} />
-                        <span className="text-xs font-bold text-slate-200">{f.title}</span>
+                        <FolderGit2 className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-slate-900 font-medium">{ws.display_name}</span>
+                        {isSelected && (
+                          <span className="text-[10px] font-semibold text-slate-500 font-mono px-1.5 rounded bg-slate-200">
+                            Active
+                          </span>
+                        )}
                       </div>
-                      <div className="text-[11px] text-slate-400 font-mono">
-                        {f.file_path} {f.line_number && `:${f.line_number}`}
+                    </td>
+                    <td className="py-2.5 px-4 text-slate-500 font-mono text-[11px] truncate max-w-xs hidden sm:table-cell">
+                      {ws.canonical_path}
+                    </td>
+                    <td className="py-2.5 px-4 whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1.5 text-slate-700 font-medium">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        Enforcing
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-4 whitespace-nowrap text-slate-700 font-mono">
+                      {isSelected ? openFindingsCount : 0}
+                    </td>
+                    <td className="py-2.5 px-4 text-slate-500 whitespace-nowrap hidden md:table-cell">
+                      {ws.last_analyzed_at
+                        ? new Date(ws.last_analyzed_at).toLocaleDateString()
+                        : 'Never'}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 2. Selected Project Detail Hub */}
+      {currentWorkspace && (
+        <div className="space-y-5 pt-4">
+          {/* Detail Header & Primary Action */}
+          <div className="p-4 rounded-lg border border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-slate-900">{currentWorkspace.display_name}</h2>
+                <span className="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                  {currentWorkspace.project_type || 'project'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 font-mono mt-0.5">
+                {currentWorkspace.canonical_path}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onStartAudit}
+              className="px-3.5 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors self-start sm:self-auto"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>Run Investigation</span>
+            </button>
+          </div>
+
+          {/* Sub-Tabs Navigation */}
+          <div className="border-b border-slate-200 flex items-center gap-1 overflow-x-auto">
+            {[
+              { id: 'overview', label: 'Overview' },
+              { id: 'findings', label: `Findings (${openFindingsCount})` },
+              { id: 'protection', label: 'Protection Rules' },
+              { id: 'attack_paths', label: 'Attack Paths' },
+              { id: 'fix_verify', label: 'Fix & Verify' },
+              { id: 'activity', label: 'Activity' }
+            ].map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id as ProjectSubTab)}
+                  className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors whitespace-nowrap ${
+                    isActive
+                      ? 'border-slate-900 text-slate-900 font-semibold'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Sub-Tab 1: Overview */}
+          {activeTab === 'overview' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg border border-slate-200 bg-white space-y-3">
+                <div className="text-xs font-semibold text-slate-900">Protected Project Assets</div>
+                <p className="text-xs text-slate-500">
+                  Writes to these sensitive files are denied by AgentFence unless explicitly approved:
+                </p>
+                <div className="space-y-1.5">
+                  {(currentWorkspace.protected_paths || ['.env', 'config.py', 'protected_admin_keys.json']).map((p, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 rounded bg-slate-50 border border-slate-200 text-xs font-mono text-slate-700">
+                      <Lock className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                      <span>{p}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-4 rounded-lg border border-slate-200 bg-white space-y-3">
+                <div className="text-xs font-semibold text-slate-900">Active Security Checks</div>
+                <p className="text-xs text-slate-500">
+                  Scanners coordinated during autonomous investigations:
+                </p>
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-200">
+                    <span className="text-slate-700">Gitleaks Secret Detection</span>
+                    <span className="text-[11px] font-mono text-emerald-700 font-medium">Active</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-200">
+                    <span className="text-slate-700">Semgrep Static Code Analysis (SAST)</span>
+                    <span className="text-[11px] font-mono text-emerald-700 font-medium">Active</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-200">
+                    <span className="text-slate-700">OSV Dependency Vulnerability Checker</span>
+                    <span className="text-[11px] font-mono text-emerald-700 font-medium">Active</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-50 border border-slate-200">
+                    <span className="text-slate-700">Prompt Shield AI Probe Tester</span>
+                    <span className="text-[11px] font-mono text-emerald-700 font-medium">Active</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-Tab 2: Findings */}
+          {activeTab === 'findings' && (
+            <div className="space-y-3">
+              {findings.length === 0 ? (
+                <div className="p-8 text-center text-xs text-slate-500 rounded-lg border border-slate-200 bg-white">
+                  No security findings detected in this project.
+                </div>
+              ) : (
+                <div className="border border-slate-200 rounded-lg bg-white divide-y divide-slate-100">
+                  {findings.map((f) => (
+                    <div key={f.id} className="p-3.5 flex items-start justify-between gap-4 text-xs hover:bg-slate-50/60 transition-colors">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <StatusBadge type="severity" value={f.severity} />
+                          <span className="font-semibold text-slate-900">{f.title}</span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 font-mono">
+                          {f.file_path} {f.line_number && `:${f.line_number}`}
+                        </div>
+                        <p className="text-xs text-slate-600 mt-1">{f.description}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <StatusBadge type="status" value={f.verification_status} />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedFindingId(f.id);
+                            setActiveTab('fix_verify');
+                          }}
+                          className="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium"
+                        >
+                          Review Fix
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge type="status" value={f.verification_status} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sub-Tab 3: Protection Rules */}
+          {activeTab === 'protection' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg border border-slate-200 bg-slate-50/60 flex items-center justify-between text-xs">
+                <div>
+                  <div className="font-semibold text-slate-900">AgentFence Shield Mode</div>
+                  <p className="text-slate-500 mt-0.5">
+                    Enforcing host boundary verification and blocking prohibited file modifications.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onTriggerPolicyBlock}
+                  className="px-3 py-1.5 rounded-md border border-rose-200 bg-white hover:bg-rose-50 text-rose-700 text-xs font-medium flex items-center gap-1.5 transition-colors"
+                >
+                  <ShieldBan className="w-3.5 h-3.5" />
+                  <span>Test Policy Block (Scenario E)</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg border border-slate-200 bg-white space-y-2">
+                  <div className="text-xs font-semibold text-slate-900">Monitored Coding Agents</div>
+                  <div className="space-y-1.5 text-xs">
+                    {(shieldStatus?.registered_agents || [
+                      { id: 'sentinel', name: 'SentinelOS Autonomous Orchestrator', type: 'Internal', status: 'Enforcing' },
+                      { id: 'antigravity', name: 'Google Antigravity IDE', type: 'IDE Integration', status: 'Monitored' },
+                      { id: 'claude', name: 'Claude Code CLI', type: 'CLI Tool', status: 'Monitored' },
+                      { id: 'cursor', name: 'Cursor Editor', type: 'Editor Extension', status: 'Monitored' }
+                    ]).map((agent) => (
+                      <div key={agent.id} className="p-2 rounded bg-slate-50 border border-slate-200 flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-slate-900">{agent.name}</div>
+                          <div className="text-[10px] text-slate-500">{agent.type}</div>
+                        </div>
+                        <span className="text-[10px] font-mono text-emerald-700 font-medium">
+                          {agent.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg border border-slate-200 bg-white space-y-2">
+                  <div className="text-xs font-semibold text-slate-900">Strictly Prohibited Operations</div>
+                  <div className="space-y-1.5 text-xs text-slate-600">
+                    {(shieldStatus?.strictly_blocked_operations || [
+                      'Writes to Protected Project Files (.env, config.py)',
+                      'Commands with path traversal (.. / /etc / ~)',
+                      'Execution of disallowed binary tools',
+                      'Unapproved patch application'
+                    ]).map((op, idx) => (
+                      <div key={idx} className="p-2 rounded bg-slate-50 border border-slate-200 flex items-center gap-2">
+                        <ShieldAlert className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                        <span>{op}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Sub-Tab 4: Attack Paths */}
+          {activeTab === 'attack_paths' && (
+            <div className="space-y-4">
+              {attackPaths.length > 0 ? (
+                <GraphViewer attackPath={attackPaths[0]} />
+              ) : (
+                <div className="p-8 text-center text-xs text-slate-500 rounded-lg border border-slate-200 bg-white">
+                  No attack paths modeled for this project yet. Run an investigation to analyze risk connections.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sub-Tab 5: Fix & Verify */}
+          {activeTab === 'fix_verify' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg border border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div>
+                  <div className="font-semibold text-slate-900">Automated Fix & Verification</div>
+                  <p className="text-slate-500 mt-0.5">
+                    Generate safe code patches, apply within workspace boundaries, and prove resolution with tests.
+                  </p>
+                </div>
+                {selectedFinding && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleGenerateFix}
+                      disabled={isFixing}
+                      className="px-3 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium flex items-center gap-1.5 transition-colors"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>{isFixing ? 'Generating...' : 'Generate Patch'}</span>
+                    </button>
+                    {currentRemediation?.proposed_patch && (
                       <button
-                        onClick={() => {
-                          setSelectedFindingId(f.id);
-                          setActiveTab('fix_verify');
-                        }}
-                        className="px-3 py-1 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-semibold transition-colors"
+                        type="button"
+                        onClick={handleApplyPatch}
+                        disabled={isApplying}
+                        className="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium flex items-center gap-1.5 transition-colors"
                       >
-                        Fix & Verify
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>{isApplying ? 'Applying...' : 'Apply Patch'}</span>
                       </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleRunVerification}
+                      disabled={isVerifying}
+                      className="px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors"
+                    >
+                      <span>{isVerifying ? 'Verifying...' : 'Verify with Tests'}</span>
+                    </button>
+                    {currentRemediation?.status === 'applied' && (
+                      <button
+                        type="button"
+                        onClick={handleRollback}
+                        className="px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center gap-1 transition-colors"
+                      >
+                        <Undo2 className="w-3.5 h-3.5" />
+                        <span>Rollback</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {actionMessage && (
+                <div className="p-3 rounded-lg border border-slate-200 bg-slate-50 text-xs text-slate-700 font-medium">
+                  {actionMessage}
+                </div>
+              )}
+
+              {selectedFinding ? (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  {/* Select finding */}
+                  <div className="p-3 rounded-lg border border-slate-200 bg-white space-y-2">
+                    <div className="text-xs font-semibold text-slate-900 pb-1 border-b border-slate-100">
+                      Select Finding
+                    </div>
+                    <div className="space-y-1.5 max-h-[350px] overflow-y-auto">
+                      {findings.map((f) => (
+                        <div
+                          key={f.id}
+                          onClick={() => {
+                            setSelectedFindingId(f.id);
+                            setActionMessage(null);
+                          }}
+                          className={`p-2.5 rounded border cursor-pointer text-xs transition-colors ${
+                            selectedFinding.id === f.id
+                              ? 'border-slate-900 bg-slate-50 font-medium'
+                              : 'border-slate-200 bg-white hover:bg-slate-50/70'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <StatusBadge type="severity" value={f.severity} />
+                            <StatusBadge type="status" value={f.verification_status} />
+                          </div>
+                          <div className="text-slate-900 truncate">{f.title}</div>
+                          <div className="text-[10px] text-slate-400 font-mono truncate">{f.file_path}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <p className="text-xs text-slate-300">{f.description}</p>
+
+                  {/* Diff Viewer */}
+                  <div className="lg:col-span-2 space-y-2">
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span>Proposed Unified Diff</span>
+                      <span className="font-mono text-[11px]">{currentRemediation?.target_file || selectedFinding.file_path}</span>
+                    </div>
+                    {currentRemediation?.proposed_patch ? (
+                      <DiffViewer diff={currentRemediation.proposed_patch} />
+                    ) : (
+                      <div className="p-8 text-center text-xs text-slate-500 border border-slate-200 rounded-lg bg-white space-y-2">
+                        <p>No patch generated for this finding yet.</p>
+                        <button
+                          type="button"
+                          onClick={handleGenerateFix}
+                          className="px-3 py-1.5 rounded-md bg-slate-900 text-white text-xs font-medium"
+                        >
+                          Generate Patch
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-8 text-center text-xs text-slate-500 border border-slate-200 rounded-lg bg-white">
+                  No findings available to patch.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Sub-Tab 6: Activity */}
+          {activeTab === 'activity' && (
+            <div className="border border-slate-200 rounded-lg bg-white divide-y divide-slate-100">
+              {auditEvents.map((evt) => (
+                <div key={evt.id} className="p-3 flex items-start justify-between gap-3 text-xs">
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <StatusBadge type="decision" value={evt.decision} />
+                      <span className="font-mono text-slate-900 text-[11px]">{evt.action}</span>
+                    </div>
+                    <p className="text-slate-600 text-xs">{evt.reason}</p>
+                  </div>
+                  <span className="text-[11px] text-slate-400 font-mono whitespace-nowrap">
+                    {new Date(evt.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
               ))}
             </div>
@@ -412,283 +623,47 @@ export const Projects: React.FC<Props> = ({
         </div>
       )}
 
-      {/* SUB-TAB 3: Protection (Shield Mode) */}
-      {activeTab === 'protection' && (
-        <div className="space-y-6">
-          <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="text-xs font-bold text-slate-100 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-emerald-400" />
-                <span>AgentFence Shield Mode</span>
-              </div>
-              <p className="text-xs text-slate-400">
-                Independent host execution gate that blocks unauthorized file modifications, traversal attacks, and unapproved commands.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={onTriggerPolicyBlock}
-                className="px-3.5 py-1.5 rounded-xl border border-rose-900/60 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-xs font-medium flex items-center gap-1.5 transition-colors"
-              >
-                <ShieldBan className="w-3.5 h-3.5 text-rose-400" />
-                <span>Trigger Scenario E Test</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Monitored Coding Agents</h4>
-              <div className="space-y-2 text-xs">
-                {(shieldStatus?.registered_agents || [
-                  { id: 'sentinel', name: 'SentinelOS Autonomous Orchestrator', type: 'Internal', status: 'Enforcing' },
-                  { id: 'antigravity', name: 'Google Antigravity IDE', type: 'IDE Integration', status: 'Monitored' },
-                  { id: 'claude', name: 'Claude Code CLI', type: 'CLI Tool', status: 'Monitored' },
-                  { id: 'cursor', name: 'Cursor Editor', type: 'Editor Extension', status: 'Monitored' }
-                ]).map((agent) => (
-                  <div key={agent.id} className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center justify-between">
-                    <div>
-                      <div className="font-semibold text-slate-200">{agent.name}</div>
-                      <div className="text-[10px] text-slate-500">{agent.type}</div>
-                    </div>
-                    <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
-                      {agent.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-3">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Strictly Blocked Actions</h4>
-              <div className="space-y-2 text-xs">
-                {(shieldStatus?.strictly_blocked_operations || [
-                  'Writes to Protected Project Files (.env, config.py)',
-                  'Commands with path traversal (.. / /etc / ~)',
-                  'Execution of disallowed binary tools',
-                  'Unapproved patch application'
-                ]).map((op, idx) => (
-                  <div key={idx} className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center gap-2 text-slate-300">
-                    <ShieldAlert className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
-                    <span>{op}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 4: Attack Paths (ThreatLens) */}
-      {activeTab === 'attack_paths' && (
-        <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <Network className="w-4 h-4 text-sky-400" />
-                <span>ThreatLens Attack Path Visualizer</span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Maps how entry points connect to vulnerable files, leaked secrets, and databases.
-              </p>
-            </div>
-          </div>
-          {attackPaths.length > 0 ? (
-            <GraphViewer attackPath={attackPaths[0]} />
-          ) : (
-            <div className="p-12 text-center text-xs text-slate-500 rounded-xl border border-dashed border-slate-800">
-              No attack path models generated yet. Run an autonomous investigation to model exploit paths.
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* SUB-TAB 5: Fix & Verify */}
-      {activeTab === 'fix_verify' && (
-        <div className="space-y-6">
-          <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <Wrench className="w-4 h-4 text-emerald-400" />
-                <span>Automated Fix & Verification Engine</span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Propose minimal patches, review diffs, apply within workspace boundaries, and prove resolution with test reruns.
-              </p>
-            </div>
-            {selectedFinding && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleGenerateFix}
-                  disabled={isFixing}
-                  className="px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                >
-                  <Sparkles className="w-3.5 h-3.5 fill-current" />
-                  <span>{isFixing ? 'Generating...' : 'Generate Patch'}</span>
-                </button>
-                {currentRemediation?.proposed_patch && (
-                  <button
-                    onClick={handleApplyPatch}
-                    disabled={isApplying}
-                    className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>{isApplying ? 'Applying...' : 'Apply Patch'}</span>
-                  </button>
-                )}
-                <button
-                  onClick={handleRunVerification}
-                  disabled={isVerifying}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 transition-colors"
-                >
-                  <span>{isVerifying ? 'Verifying...' : 'Run Verification & Tests'}</span>
-                </button>
-                {currentRemediation?.status === 'applied' && (
-                  <button
-                    onClick={handleRollback}
-                    className="px-3.5 py-1.5 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-medium flex items-center gap-1.5 transition-colors"
-                  >
-                    <Undo2 className="w-3.5 h-3.5" />
-                    <span>Rollback</span>
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-
-          {actionMessage && (
-            <div className="p-3.5 rounded-xl border border-sky-900/60 bg-sky-950/40 text-xs text-sky-200 font-medium">
-              {actionMessage}
-            </div>
-          )}
-
-          {selectedFinding ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Finding Selection (Left) */}
-              <div className="p-4 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-3">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">
-                  Select Issue to Fix
-                </span>
-                <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                  {findings.map((f) => (
-                    <div
-                      key={f.id}
-                      onClick={() => {
-                        setSelectedFindingId(f.id);
-                        setActionMessage(null);
-                      }}
-                      className={`p-3 rounded-xl border cursor-pointer transition-all text-xs space-y-1 ${
-                        selectedFinding.id === f.id
-                          ? 'border-sky-500 bg-sky-950/30'
-                          : 'border-slate-800 bg-slate-900/60 hover:border-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <StatusBadge type="severity" value={f.severity} />
-                        <StatusBadge type="status" value={f.verification_status} />
-                      </div>
-                      <div className="font-semibold text-slate-200 truncate">{f.title}</div>
-                      <div className="text-[10px] text-slate-400 font-mono truncate">{f.file_path}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Diff Viewer (Right 2 cols) */}
-              <div className="lg:col-span-2 p-5 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-200">Proposed Code Patch</span>
-                  <span className="text-[10px] font-mono text-slate-400">
-                    {currentRemediation?.target_file || selectedFinding.file_path}
-                  </span>
-                </div>
-                {currentRemediation?.proposed_patch ? (
-                  <DiffViewer diff={currentRemediation.proposed_patch} />
-                ) : (
-                  <div className="p-12 text-center text-xs text-slate-500 rounded-xl border border-dashed border-slate-800 space-y-2">
-                    <p>No patch generated yet for this finding.</p>
-                    <button
-                      onClick={handleGenerateFix}
-                      className="px-3.5 py-1.5 rounded-lg bg-sky-500 text-slate-950 font-semibold text-xs"
-                    >
-                      Generate Patch Now
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="p-12 text-center text-xs text-slate-500">
-              No findings available to fix.
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* SUB-TAB 6: Activity */}
-      {activeTab === 'activity' && (
-        <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-4">
-          <h3 className="text-sm font-bold text-slate-100">Project Activity History</h3>
-          <div className="space-y-2 max-h-[500px] overflow-y-auto">
-            {auditEvents.map((evt) => (
-              <div key={evt.id} className="p-3 rounded-xl border border-slate-800 bg-slate-900/60 flex items-center justify-between text-xs">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <StatusBadge type="decision" value={evt.decision} />
-                    <span className="font-mono text-slate-200">{evt.action}</span>
-                  </div>
-                  <p className="text-slate-400">{evt.reason}</p>
-                </div>
-                <span className="text-[10px] text-slate-500 font-mono">
-                  {new Date(evt.created_at).toLocaleTimeString()}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Add Project Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-[#0b101c] border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
-            <h3 className="text-sm font-bold text-slate-100">Add New Project</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-lg p-5 shadow-xl space-y-4">
+            <h3 className="text-sm font-semibold text-slate-900">Add Project</h3>
             {errorMsg && (
-              <div className="p-2.5 rounded-lg bg-rose-950 text-rose-300 text-xs">{errorMsg}</div>
+              <div className="p-2.5 rounded bg-rose-50 text-rose-700 border border-rose-200 text-xs">{errorMsg}</div>
             )}
             <form onSubmit={handleCreateWorkspace} className="space-y-3 text-xs">
               <div>
-                <label className="text-slate-400 block mb-1">Display Name</label>
+                <label className="text-slate-600 block mb-1 font-medium">Display Name</label>
                 <input
                   type="text"
-                  placeholder="My Project"
+                  placeholder="My Web App"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-800 bg-[#070b12] text-slate-200 focus:outline-none focus:border-sky-500"
+                  className="w-full px-3 py-1.5 rounded-md border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-400"
                 />
               </div>
               <div>
-                <label className="text-slate-400 block mb-1">Canonical Path (Absolute Directory)</label>
+                <label className="text-slate-600 block mb-1 font-medium">Canonical Path (Absolute Directory)</label>
                 <input
                   type="text"
                   placeholder="/Users/username/projects/my-app"
                   value={canonicalPath}
                   onChange={(e) => setCanonicalPath(e.target.value)}
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-800 bg-[#070b12] text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                  className="w-full px-3 py-1.5 rounded-md border border-slate-200 bg-white text-slate-900 focus:outline-none focus:border-slate-400 font-mono"
                 />
               </div>
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 text-slate-300"
+                  className="px-3 py-1.5 rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting || !canonicalPath}
-                  className="px-4 py-1.5 rounded-lg bg-sky-500 text-slate-950 font-semibold"
+                  className="px-4 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white font-medium disabled:opacity-50"
                 >
                   {isSubmitting ? 'Registering...' : 'Add Project'}
                 </button>

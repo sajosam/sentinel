@@ -1,26 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Investigation, InvestigationStep } from '../types';
 import { api } from '../api/client';
 import { StatusBadge } from '../components/StatusBadge';
 import {
   Terminal,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
   Play,
   XCircle,
-  Sparkles,
-  Layers,
-  FileCode,
-  ShieldAlert,
   Search,
   Key,
   Package,
   Code2,
+  ShieldAlert,
   Network,
   Wrench,
   ShieldCheck,
-  ArrowRight
+  ChevronDown,
+  ChevronRight,
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
 
 interface Props {
@@ -34,13 +31,7 @@ export const InvestigationCenter: React.FC<Props> = ({
   onRefresh,
   onStartNew
 }) => {
-  const [selectedStep, setSelectedStep] = useState<InvestigationStep | null>(null);
-
-  useEffect(() => {
-    if (currentInvestigation?.steps?.length) {
-      setSelectedStep(currentInvestigation.steps[currentInvestigation.steps.length - 1]);
-    }
-  }, [currentInvestigation]);
+  const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
 
   const handleCancel = async () => {
     if (!currentInvestigation) return;
@@ -75,85 +66,121 @@ export const InvestigationCenter: React.FC<Props> = ({
     }
   };
 
-  const getStepFriendlyName = (stepType: string, toolName?: string) => {
-    switch (stepType) {
+  const getStepDetails = (step: InvestigationStep, nextStep?: InvestigationStep) => {
+    switch (step.step_type) {
       case 'discovery':
-        return 'Understanding the Project';
+        return {
+          checking: 'Analyzing project directory structure, manifests, and sensitive file patterns.',
+          discovered: step.tool_output?.files_indexed
+            ? `Indexed ${step.tool_output.files_indexed} project files and identified protected paths.`
+            : 'Mapped project boundary and protected paths (.env, keys).',
+          next: 'Proceeding to scan project files and Git history for exposed secrets.'
+        };
       case 'secret_scan':
-        return 'Checking for Exposed Secrets';
+        return {
+          checking: 'Executing Gitleaks scanner to detect API keys, tokens, and hardcoded credentials.',
+          discovered: step.tool_output?.findings?.length
+            ? `Detected ${step.tool_output.findings.length} exposed credential(s) with confirmed file line references.`
+            : 'Checked files with Gitleaks; findings recorded with automatic secret redaction.',
+          next: 'Scanning third-party package manifests against the OSV vulnerability database.'
+        };
       case 'dependency_scan':
-        return 'Scanning Dependencies for CVEs';
+        return {
+          checking: 'Discovering package manifests (requirements.txt, package.json) and querying OSV database for CVEs.',
+          discovered: step.tool_output?.findings?.length
+            ? `Identified ${step.tool_output.findings.length} vulnerable package dependency matching known CVEs.`
+            : 'Scanned project dependencies against national vulnerability records.',
+          next: 'Running Semgrep SAST analyzer to check application code for SQL injection and unsafe input handling.'
+        };
       case 'sast_scan':
-        return 'Investigating Suspicious Code (SAST)';
+        return {
+          checking: 'Analyzing application source code with Semgrep for injection vulnerabilities and dangerous patterns.',
+          discovered: step.tool_output?.findings?.length
+            ? `Found ${step.tool_output.findings.length} static code vulnerability (including unparameterized SQL queries).`
+            : 'Completed static code analysis across source files.',
+          next: 'Executing Prompt Shield test to probe AI endpoints for prompt injection and simulated secret disclosure.'
+        };
       case 'prompt_shield_test':
-        return 'Probing AI Prompts & Guardrails';
-      case 'attack_path_analysis':
-        return 'Connecting Related Risks (ThreatLens)';
-      case 'remediation_proposal':
-        return 'Proposing Security Patches';
-      case 'verification':
-        return 'Verifying Fixes & Tests';
+        return {
+          checking: 'Probing AI application endpoints with prompt injection and instruction extraction test payloads.',
+          discovered: step.tool_output?.findings?.length
+            ? `Recorded ${step.tool_output.findings.length} prompt guardrail failure on unhardened AI test routes.`
+            : 'Executed controlled prompt injection probes against local demo target.',
+          next: 'Correlating related findings into ThreatLens attack paths.'
+        };
       default:
-        return toolName || stepType.replace(/_/g, ' ');
+        return {
+          checking: `Executing ${step.tool_name || step.step_type} under AgentFence boundary policies.`,
+          discovered: step.reasoning || 'Step execution completed successfully.',
+          next: nextStep ? `Next: ${nextStep.step_type.replace(/_/g, ' ')}` : 'Generating final audit summary.'
+        };
     }
   };
 
   if (!currentInvestigation) {
     return (
-      <div className="p-12 text-center border border-dashed border-slate-800 rounded-2xl bg-[#0b101c] space-y-4 max-w-xl mx-auto my-12">
-        <div className="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 mx-auto">
-          <Terminal className="w-6 h-6" />
+      <div className="max-w-xl mx-auto my-16 text-center space-y-4">
+        <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 mx-auto">
+          <Terminal className="w-5 h-5" />
         </div>
-        <h3 className="text-base font-bold text-slate-100">No Active Investigation</h3>
-        <p className="text-xs text-slate-400 leading-relaxed">
-          Start an autonomous security audit to inspect your workspace. SentinelOS coordinates real host scanners (Gitleaks, Semgrep, OSV) under independent policy rules.
-        </p>
+        <div>
+          <h2 className="text-base font-semibold text-slate-900">No active investigation</h2>
+          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+            Launch an autonomous investigation to inspect your workspace for secrets, dependencies, and code vulnerabilities.
+          </p>
+        </div>
         <button
+          type="button"
           onClick={onStartNew}
-          className="px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold inline-flex items-center gap-2 glow-blue transition-all"
+          className="px-4 py-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium inline-flex items-center gap-1.5 transition-colors"
         >
           <Play className="w-3.5 h-3.5 fill-current" />
-          <span>Launch Autonomous Scan</span>
+          <span>Start Investigation</span>
         </button>
       </div>
     );
   }
 
   const isRunning = ['running', 'planning', 'pending'].includes(currentInvestigation.status);
+  const steps = currentInvestigation.steps || [];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Top Header Card */}
-      <div className="p-6 rounded-2xl border border-slate-800 bg-[#0b101c] flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-lg">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <span className={`w-2.5 h-2.5 rounded-full ${isRunning ? 'bg-sky-400 animate-pulse' : currentInvestigation.status === 'completed' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800">
-              Autonomous Investigation
-            </span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-              Status: {currentInvestigation.status.toUpperCase()}
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* 1. Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold text-slate-900 tracking-tight">Investigation</h1>
+            <span className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
+              currentInvestigation.status === 'completed'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : isRunning
+                ? 'bg-sky-50 text-sky-700 border-sky-200'
+                : 'bg-slate-100 text-slate-700 border-slate-200'
+            }`}>
+              {currentInvestigation.status.toUpperCase()}
             </span>
           </div>
-          <h1 className="text-lg font-bold text-slate-100">{currentInvestigation.goal}</h1>
-          <p className="text-xs text-slate-400 font-mono">
-            ID: {currentInvestigation.id} • Started: {new Date(currentInvestigation.created_at).toLocaleTimeString()}
+          <p className="text-xs text-slate-500 mt-1">
+            Goal: {currentInvestigation.goal} • Started {new Date(currentInvestigation.created_at).toLocaleTimeString()}
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
           {isRunning ? (
             <button
+              type="button"
               onClick={handleCancel}
-              className="px-4 py-2 rounded-xl border border-rose-900 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-1.5 rounded-md border border-rose-200 bg-white hover:bg-rose-50 text-rose-700 text-xs font-medium flex items-center gap-1.5 transition-colors"
             >
-              <XCircle className="w-4 h-4 text-rose-400" />
+              <XCircle className="w-3.5 h-3.5" />
               <span>Cancel Scan</span>
             </button>
           ) : (
             <button
+              type="button"
               onClick={onStartNew}
-              className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold flex items-center gap-2 glow-blue transition-all"
+              className="px-3.5 py-1.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
               <span>Run New Scan</span>
@@ -162,130 +189,106 @@ export const InvestigationCenter: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Main Workflow View: Steps Timeline (Left) + Step Output Inspector (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Steps List (Timeline) */}
-        <div className="p-5 rounded-2xl border border-slate-800 bg-[#0b101c] space-y-3">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-            <span className="text-xs uppercase tracking-wider font-semibold text-slate-300">
-              Executed Timeline
-            </span>
-            <span className="text-[10px] font-mono text-slate-500">{currentInvestigation.steps?.length || 0} step(s) executed</span>
+      {/* 2. Final Verdict Summary (if completed) */}
+      {currentInvestigation.summary && (
+        <div className="p-3.5 rounded-lg border border-emerald-200 bg-emerald-50/60 text-xs text-emerald-900 space-y-1">
+          <div className="font-semibold flex items-center gap-1.5 text-emerald-800">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>Investigation Completed</span>
           </div>
+          <p className="text-slate-700 leading-relaxed">{currentInvestigation.summary}</p>
+        </div>
+      )}
 
-          <div className="space-y-2.5 max-h-[550px] overflow-y-auto pr-1">
-            {(currentInvestigation.steps || []).map((step) => {
-              const isSelected = selectedStep?.id === step.id;
-              const isStepRunning = step.status === 'running';
-              const StepIcon = getStepIcon(step.step_type);
-              const friendlyName = getStepFriendlyName(step.step_type, step.tool_name);
-
-              return (
-                <div
-                  key={step.id}
-                  onClick={() => setSelectedStep(step)}
-                  className={`p-3.5 rounded-xl border cursor-pointer transition-all space-y-2 ${
-                    isSelected
-                      ? 'border-sky-500 bg-sky-950/30 shadow-sm'
-                      : 'border-slate-800/80 bg-slate-900/60 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-5 h-5 rounded-md flex items-center justify-center text-xs ${
-                        isSelected ? 'bg-sky-500/20 text-sky-400' : 'bg-slate-800 text-slate-400'
-                      }`}>
-                        <StepIcon className="w-3.5 h-3.5" />
-                      </div>
-                      <span className="font-mono text-slate-400 text-[11px]">Step {step.step_index}</span>
-                    </div>
-
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
-                      step.status === 'completed'
-                        ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                        : isStepRunning
-                        ? 'bg-sky-950 text-sky-400 border border-sky-800 animate-pulse'
-                        : 'bg-rose-950 text-rose-400 border border-rose-800'
-                    }`}>
-                      {step.status}
-                    </span>
-                  </div>
-
-                  <div className="text-xs font-semibold text-slate-200">
-                    {friendlyName}
-                  </div>
-
-                  {step.reasoning && (
-                    <p className="text-[11px] text-slate-400 line-clamp-2 leading-snug">
-                      {step.reasoning}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+      {/* 3. Readable Investigation Timeline */}
+      <div className="space-y-3">
+        <div className="text-xs font-semibold text-slate-900">
+          Investigation Timeline ({steps.length} steps)
         </div>
 
-        {/* Step Details & Live Log Inspector */}
-        <div className="lg:col-span-2 p-5 rounded-2xl border border-slate-800 bg-[#0b101c] flex flex-col justify-between space-y-4">
-          <div>
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-sky-400" />
-                <h3 className="text-sm font-bold text-slate-100">
-                  {selectedStep ? `Step ${selectedStep.step_index}: ${getStepFriendlyName(selectedStep.step_type, selectedStep.tool_name)}` : 'Investigation Output & Evidence'}
-                </h3>
-              </div>
-              {selectedStep && (
-                <span className="text-[10px] font-mono text-slate-400">
-                  Tool: {selectedStep.tool_name || 'Orchestrator'}
-                </span>
-              )}
-            </div>
+        <div className="border border-slate-200 rounded-lg bg-white divide-y divide-slate-100">
+          {steps.map((step, idx) => {
+            const isExpanded = expandedStepId === step.id;
+            const StepIcon = getStepIcon(step.step_type);
+            const details = getStepDetails(step, steps[idx + 1]);
 
-            {selectedStep ? (
-              <div className="mt-4 space-y-4">
-                {/* Reasoning Box */}
-                {selectedStep.reasoning && (
-                  <div className="p-3.5 rounded-xl border border-sky-900/40 bg-sky-950/20 space-y-1">
-                    <span className="text-[10px] font-semibold tracking-wider text-sky-400 uppercase flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      Why this step was selected
-                    </span>
-                    <p className="text-xs text-slate-200 leading-relaxed font-sans">{selectedStep.reasoning}</p>
+            return (
+              <div key={step.id} className="p-4 space-y-2.5">
+                {/* Step Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 flex-shrink-0">
+                      <StepIcon className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-slate-900 flex items-center gap-2">
+                        <span>Step {step.step_index}: {step.step_type.replace(/_/g, ' ')}</span>
+                        {step.tool_name && (
+                          <span className="font-mono text-[11px] text-slate-400 font-normal">({step.tool_name})</span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-400 font-mono">
+                        {step.completed_at ? new Date(step.completed_at).toLocaleTimeString() : 'Running'}
+                      </div>
+                    </div>
                   </div>
-                )}
 
-                {/* Structured Output or Raw Logs */}
-                <div>
-                  <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase block mb-1.5">
-                    Collected Evidence & Tool Results
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-medium border uppercase ${
+                    step.status === 'completed'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : step.status === 'running'
+                      ? 'bg-sky-50 text-sky-700 border-sky-200'
+                      : 'bg-rose-50 text-rose-700 border-rose-200'
+                  }`}>
+                    {step.status}
                   </span>
-                  <div className="rounded-xl border border-slate-800 bg-[#070b12] p-3 font-mono text-xs text-slate-300 max-h-[300px] overflow-y-auto">
-                    {selectedStep.tool_output && Object.keys(selectedStep.tool_output).length > 0 ? (
-                      <pre className="text-[11px] leading-relaxed whitespace-pre-wrap font-mono">
-                        {JSON.stringify(selectedStep.tool_output, null, 2)}
-                      </pre>
-                    ) : (
-                      <span className="text-slate-500 italic">No output artifacts recorded for this step.</span>
-                    )}
+                </div>
+
+                {/* Plain-English 3-part Explanation */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs pt-1">
+                  <div className="p-2.5 rounded bg-slate-50 border border-slate-200/80 space-y-0.5">
+                    <span className="text-[10px] uppercase font-semibold text-slate-400 block tracking-wider">Checking</span>
+                    <p className="text-slate-700 text-[11px] leading-snug">{details.checking}</p>
+                  </div>
+                  <div className="p-2.5 rounded bg-slate-50 border border-slate-200/80 space-y-0.5">
+                    <span className="text-[10px] uppercase font-semibold text-slate-400 block tracking-wider">Discovered</span>
+                    <p className="text-slate-700 text-[11px] leading-snug">{details.discovered}</p>
+                  </div>
+                  <div className="p-2.5 rounded bg-slate-50 border border-slate-200/80 space-y-0.5">
+                    <span className="text-[10px] uppercase font-semibold text-slate-400 block tracking-wider">Next Step</span>
+                    <p className="text-slate-700 text-[11px] leading-snug">{details.next}</p>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="p-12 text-center text-xs text-slate-500">
-                Select a step on the left to inspect its telemetry, tool outputs, and LLM reasoning.
-              </div>
-            )}
-          </div>
 
-          {/* Investigation Final Summary */}
-          {currentInvestigation.summary && (
-            <div className="p-4 rounded-xl border border-emerald-900/40 bg-emerald-950/20 text-xs text-emerald-300">
-              <span className="font-bold block mb-1 text-[11px] text-emerald-400 uppercase tracking-wider">Final Audit Verdict</span>
-              <p className="leading-relaxed">{currentInvestigation.summary}</p>
-            </div>
-          )}
+                {/* Expandable Evidence & Technical Details (Hidden by default) */}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedStepId(isExpanded ? null : step.id)}
+                    className="text-[11px] text-slate-500 hover:text-slate-800 font-medium flex items-center gap-1 transition-colors"
+                  >
+                    {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                    <span>{isExpanded ? 'Hide evidence and technical details' : 'View evidence and technical details'}</span>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="mt-2 p-3 rounded bg-slate-900 text-slate-100 font-mono text-[11px] overflow-x-auto max-h-60 overflow-y-auto">
+                      {step.reasoning && (
+                        <div className="mb-2 pb-2 border-b border-slate-800 text-slate-300">
+                          <span className="text-[10px] uppercase text-slate-500 block mb-0.5">Model Reasoning:</span>
+                          {step.reasoning}
+                        </div>
+                      )}
+                      <span className="text-[10px] uppercase text-slate-500 block mb-0.5">Raw Output Artifacts:</span>
+                      <pre className="whitespace-pre-wrap leading-relaxed">
+                        {JSON.stringify(step.tool_output || {}, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
