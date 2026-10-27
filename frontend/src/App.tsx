@@ -11,20 +11,18 @@ import {
 import { api } from './api/client';
 import { Header } from './components/Header';
 import { Sidebar, NavTab } from './components/Sidebar';
+import { OnboardingModal } from './components/OnboardingModal';
 import { Overview } from './pages/Overview';
+import { Projects } from './pages/Projects';
 import { InvestigationCenter } from './pages/InvestigationCenter';
 import { Findings } from './pages/Findings';
-import { AttackPaths } from './pages/AttackPaths';
-import { FixVerify } from './pages/FixVerify';
-import { ShieldMode } from './pages/ShieldMode';
-import { Workspaces } from './pages/Workspaces';
 import { ActivityAudit } from './pages/ActivityAudit';
 import { Settings } from './pages/Settings';
-import { Onboarding } from './pages/Onboarding';
 import { ShieldAlert, CheckCircle2 } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavTab>('overview');
+  const [projectSubTab, setProjectSubTab] = useState<string>('overview');
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
   const [investigations, setInvestigations] = useState<Investigation[]>([]);
@@ -36,6 +34,7 @@ export const App: React.FC = () => {
 
   const [selectedFindingForFix, setSelectedFindingForFix] = useState<Finding | null>(null);
   const [policyNotification, setPolicyNotification] = useState<any | null>(null);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
 
   // Load initial application data
   useEffect(() => {
@@ -75,7 +74,11 @@ export const App: React.FC = () => {
     eventSource.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
-        if (payload.event_type === 'step_completed' || payload.event_type === 'finished' || payload.event_type === 'finding_discovered') {
+        if (
+          payload.event_type === 'step_completed' ||
+          payload.event_type === 'finished' ||
+          payload.event_type === 'finding_discovered'
+        ) {
           refreshData();
         }
       } catch (err) {
@@ -108,9 +111,12 @@ export const App: React.FC = () => {
   };
 
   const handleStartInvestigation = async () => {
-    if (!currentWorkspace) return;
+    if (!currentWorkspace) {
+      setIsOnboardingOpen(true);
+      return;
+    }
     try {
-      const inv = await api.startInvestigation(currentWorkspace.id);
+      await api.startInvestigation(currentWorkspace.id);
       setCurrentTab('investigations');
       refreshData();
     } catch (e) {
@@ -123,7 +129,6 @@ export const App: React.FC = () => {
       const res = await api.triggerPolicyViolation();
       setPolicyNotification(res);
       refreshData();
-      setCurrentTab('shield_mode');
     } catch (e: any) {
       console.error(e);
     }
@@ -141,11 +146,21 @@ export const App: React.FC = () => {
 
   const handleSelectFindingForFix = (finding: Finding) => {
     setSelectedFindingForFix(finding);
-    setCurrentTab('fix_verify');
+    setCurrentTab('projects');
+    setProjectSubTab('fix_verify');
+  };
+
+  const handleNavigateWithSubTab = (tab: NavTab, subTab?: string) => {
+    setCurrentTab(tab);
+    if (subTab) {
+      setProjectSubTab(subTab);
+    }
   };
 
   const currentInvestigation = investigations[0] || null;
-  const isInvestigating = currentInvestigation ? ['running', 'planning', 'pending'].includes(currentInvestigation.status) : false;
+  const isInvestigating = currentInvestigation
+    ? ['running', 'planning', 'pending'].includes(currentInvestigation.status)
+    : false;
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#080c14] text-slate-100 overflow-hidden font-sans">
@@ -157,21 +172,22 @@ export const App: React.FC = () => {
         onStartInvestigation={handleStartInvestigation}
         onTriggerPolicyBlock={handleTriggerPolicyBlock}
         onResetDemo={handleResetDemo}
+        onOpenOnboarding={() => setIsOnboardingOpen(true)}
         isInvestigating={isInvestigating}
       />
 
-      {/* Main Workspace Frame */}
+      {/* Main Frame */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
+        {/* Simplified Left Sidebar (6 items) */}
         <Sidebar
           currentTab={currentTab}
           onSelectTab={(tab) => setCurrentTab(tab)}
           unresolvedCount={findings.filter((f) => f.verification_status !== 'verified_fixed').length}
-          blockedCount={shieldStatus?.metrics.blocked_actions || 0}
+          blockedCount={shieldStatus?.metrics?.blocked_actions || 0}
           isInvestigating={isInvestigating}
         />
 
-        {/* Content Body Container */}
+        {/* Content Body */}
         <main className="flex-1 overflow-y-auto p-6 bg-[#080c14]">
           {/* Policy Notification Toast */}
           {policyNotification && (
@@ -192,27 +208,52 @@ export const App: React.FC = () => {
               </div>
               <button
                 onClick={() => setPolicyNotification(null)}
-                className="text-rose-400 hover:text-rose-200 text-sm ml-4"
+                className="text-rose-400 hover:text-rose-200 text-sm ml-4 font-bold"
               >
                 &times;
               </button>
             </div>
           )}
 
-          {/* Tab Views */}
+          {/* 1. Overview Page */}
           {currentTab === 'overview' && (
             <Overview
               workspaces={workspaces}
+              currentWorkspace={currentWorkspace}
               findings={findings}
               auditEvents={auditEvents}
               shieldStatus={shieldStatus}
+              investigations={investigations}
+              isInvestigating={isInvestigating}
               onStartAudit={handleStartInvestigation}
               onTriggerPolicyBlock={handleTriggerPolicyBlock}
               onResetDemo={handleResetDemo}
-              onNavigateToTab={(tab) => setCurrentTab(tab)}
+              onOpenOnboarding={() => setIsOnboardingOpen(true)}
+              onNavigateToTab={handleNavigateWithSubTab}
+              onSelectFindingForFix={handleSelectFindingForFix}
             />
           )}
 
+          {/* 2. Projects Hub (consolidating Workspaces, Protection, Attack Paths, Fix & Verify) */}
+          {currentTab === 'projects' && (
+            <Projects
+              workspaces={workspaces}
+              currentWorkspace={currentWorkspace}
+              onSelectWorkspace={(ws) => setCurrentWorkspace(ws)}
+              findings={findings}
+              attackPaths={attackPaths}
+              shieldStatus={shieldStatus}
+              auditEvents={auditEvents}
+              investigations={investigations}
+              onStartAudit={handleStartInvestigation}
+              onTriggerPolicyBlock={handleTriggerPolicyBlock}
+              onResetDemo={handleResetDemo}
+              onRefresh={initApp}
+              initialSubTab={projectSubTab}
+            />
+          )}
+
+          {/* 3. Investigations Center */}
           {currentTab === 'investigations' && (
             <InvestigationCenter
               currentInvestigation={currentInvestigation}
@@ -221,6 +262,7 @@ export const App: React.FC = () => {
             />
           )}
 
+          {/* 4. Findings Center */}
           {currentTab === 'findings' && (
             <Findings
               findings={findings}
@@ -228,56 +270,29 @@ export const App: React.FC = () => {
             />
           )}
 
-          {currentTab === 'threatlens' && (
-            <AttackPaths
-              attackPaths={attackPaths}
-              onStartAudit={handleStartInvestigation}
-            />
-          )}
-
-          {currentTab === 'fix_verify' && (
-            <FixVerify
-              findings={findings}
-              selectedFinding={selectedFindingForFix}
-              onRefresh={refreshData}
-            />
-          )}
-
-          {currentTab === 'shield_mode' && (
-            <ShieldMode
-              shieldStatus={shieldStatus}
-              onTriggerPolicyBlock={handleTriggerPolicyBlock}
-            />
-          )}
-
-          {currentTab === 'workspaces' && (
-            <Workspaces
-              workspaces={workspaces}
-              currentWorkspace={currentWorkspace}
-              onSelectWorkspace={(ws) => setCurrentWorkspace(ws)}
-              onStartAudit={handleStartInvestigation}
-              onRefresh={initApp}
-            />
-          )}
-
-          {currentTab === 'audit' && (
+          {/* 5. Activity & Audit Feed */}
+          {currentTab === 'activity' && (
             <ActivityAudit auditEvents={auditEvents} />
           )}
 
+          {/* 6. Settings */}
           {currentTab === 'settings' && (
             <Settings health={health} />
           )}
-
-          {currentTab === 'onboarding' && (
-            <Onboarding
-              health={health}
-              currentWorkspace={currentWorkspace}
-              onStartAudit={handleStartInvestigation}
-              onNavigateToTab={(tab) => setCurrentTab(tab)}
-            />
-          )}
         </main>
       </div>
+
+      {/* 5-Step Guided Onboarding Setup Modal */}
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={() => setIsOnboardingOpen(false)}
+        health={health}
+        workspaces={workspaces}
+        currentWorkspace={currentWorkspace}
+        onSelectWorkspace={(ws) => setCurrentWorkspace(ws)}
+        onStartAudit={handleStartInvestigation}
+        onRefreshWorkspaces={initApp}
+      />
     </div>
   );
 };

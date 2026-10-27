@@ -1,6 +1,6 @@
 import React from 'react';
 import { Workspace } from '../types';
-import { Shield, Play, RotateCcw, ShieldBan, Sparkles } from 'lucide-react';
+import { Shield, RotateCcw, ShieldBan, Sparkles, HelpCircle, FolderGit2 } from 'lucide-react';
 
 interface Props {
   workspaces: Workspace[];
@@ -9,6 +9,7 @@ interface Props {
   onStartInvestigation: () => void;
   onTriggerPolicyBlock: () => void;
   onResetDemo: () => void;
+  onOpenOnboarding: () => void;
   isInvestigating: boolean;
 }
 
@@ -19,29 +20,30 @@ export const Header: React.FC<Props> = ({
   onStartInvestigation,
   onTriggerPolicyBlock,
   onResetDemo,
+  onOpenOnboarding,
   isInvestigating,
 }) => {
   return (
-    <header className="h-16 border-b border-slate-800 bg-[#0a0f1d] px-6 flex items-center justify-between z-10">
-      {/* Brand & Workspace Picker */}
+    <header className="h-16 border-b border-slate-800/80 bg-[#0a0f1d] px-6 flex items-center justify-between z-10 flex-shrink-0 select-none">
+      {/* Brand & Project Selector */}
       <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400">
             <Shield className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-sm font-bold tracking-tight text-slate-100 flex items-center gap-1.5">
+            <h1 className="text-sm font-bold tracking-tight text-slate-100 flex items-center gap-2">
               SentinelOS <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-sky-950 text-sky-400 border border-sky-800">Local-First</span>
             </h1>
             <p className="text-[10px] text-slate-400 -mt-0.5 font-medium">Build with AI. Stay in control.</p>
           </div>
         </div>
 
-        {/* Workspace Selector */}
-        <div className="flex items-center gap-2 pl-4 border-l border-slate-800">
-          <span className="text-xs text-slate-500 font-medium">Workspace:</span>
+        {/* Project Selector */}
+        <div className="flex items-center gap-2 pl-4 border-l border-slate-800/80">
+          <span className="text-xs text-slate-500 font-medium">Project:</span>
           <select
-            className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+            className="bg-slate-900/90 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-sky-500 cursor-pointer"
             value={currentWorkspace?.id || ''}
             onChange={(e) => {
               const ws = workspaces.find((w) => w.id === e.target.value);
@@ -57,13 +59,23 @@ export const Header: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Action Controls */}
-      <div className="flex items-center gap-3">
+      {/* Quick Action Controls */}
+      <div className="flex items-center gap-2.5">
+        {/* Quick Setup Guide */}
+        <button
+          onClick={onOpenOnboarding}
+          title="Open guided 5-step onboarding and setup tour"
+          className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 text-xs font-medium flex items-center gap-1.5 transition-colors"
+        >
+          <HelpCircle className="w-3.5 h-3.5 text-sky-400" />
+          <span>Quick Setup</span>
+        </button>
+
         {/* Reset Demo button */}
         <button
           onClick={onResetDemo}
           title="Restore Security Lab demo files to initial vulnerable state"
-          className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/80 hover:bg-slate-800 text-slate-300 text-xs font-medium flex items-center gap-1.5 transition-colors"
+          className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900/60 hover:bg-slate-800 text-slate-300 text-xs font-medium flex items-center gap-1.5 transition-colors"
         >
           <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
           <span>Reset Lab</span>
@@ -73,7 +85,7 @@ export const Header: React.FC<Props> = ({
         <button
           onClick={onTriggerPolicyBlock}
           title="Demonstrate Scenario E: Shield Mode independently blocks unauthorized file modification"
-          className="px-3 py-1.5 rounded-lg border border-rose-900/60 bg-rose-950/30 hover:bg-rose-900/40 text-rose-300 text-xs font-medium flex items-center gap-1.5 transition-colors"
+          className="px-3 py-1.5 rounded-lg border border-rose-900/60 bg-rose-950/30 hover:bg-rose-900/50 text-rose-300 text-xs font-medium flex items-center gap-1.5 transition-colors"
         >
           <ShieldBan className="w-3.5 h-3.5 text-rose-400" />
           <span>Test Policy Denial</span>
@@ -83,7 +95,7 @@ export const Header: React.FC<Props> = ({
         <button
           onClick={onStartInvestigation}
           disabled={isInvestigating || !currentWorkspace}
-          className={`px-4 py-1.5 rounded-lg font-semibold text-xs flex items-center gap-2 transition-all shadow-sm ${
+          className={`px-4 py-1.5 rounded-lg font-bold text-xs flex items-center gap-2 transition-all shadow-sm ${
             isInvestigating
               ? 'bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-700'
               : 'bg-sky-500 hover:bg-sky-400 text-slate-950 glow-blue'
@@ -92,12 +104,12 @@ export const Header: React.FC<Props> = ({
           {isInvestigating ? (
             <>
               <div className="w-3.5 h-3.5 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
-              <span>Investigating...</span>
+              <span>Scanning...</span>
             </>
           ) : (
             <>
               <Sparkles className="w-3.5 h-3.5 fill-current" />
-              <span>Run Autonomous Audit</span>
+              <span>Run Autonomous Scan</span>
             </>
           )}
         </button>
