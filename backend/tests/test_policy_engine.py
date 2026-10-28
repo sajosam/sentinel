@@ -69,3 +69,22 @@ def test_permitted_action(db_session):
         action_type="read"
     )
     assert result.decision == "ALLOW"
+
+
+def test_protected_path_read_denied(db_session):
+    demo_dir = Path(__file__).parent.parent.parent / "demo_lab"
+    ws = db_session.query(Workspace).filter(Workspace.canonical_path == str(demo_dir.resolve())).first()
+
+    # Attempt to read protected_admin_keys.json or .env
+    protected_file = str(demo_dir.resolve() / "protected_admin_keys.json")
+    result = PolicyEngine.evaluate_action(
+        db=db_session,
+        workspace_id=ws.id,
+        tool_name="file_reader",
+        target_path=protected_file,
+        action_type="read"
+    )
+    assert result.decision == "DENY"
+    assert result.violated_rule == "PROTECTED_PATH_VIOLATION"
+    assert "Shield Mode Protection" in result.reason
+

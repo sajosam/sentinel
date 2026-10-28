@@ -92,11 +92,22 @@ class PolicyEngine:
             if dp not in protected_paths:
                 protected_paths.append(dp)
 
-        if target_path and action_type in ["write", "delete", "execute"]:
-            target_str = str(Path(target_path).resolve())
+        if target_path and action_type in ["read", "write", "delete", "execute"]:
+            target_resolved = Path(target_path).resolve()
+            target_str = str(target_resolved)
             for prot in protected_paths:
-                prot_resolved = str(canonical_root / prot) if not os.path.isabs(prot) else prot
-                if target_str == prot_resolved or target_str.startswith(prot_resolved + "/") or prot in target_str:
+                prot_resolved = (canonical_root / prot).resolve() if not os.path.isabs(prot) else Path(prot).resolve()
+                prot_str = str(prot_resolved)
+                
+                matches = False
+                if target_str == prot_str or target_str.startswith(prot_str + os.sep):
+                    matches = True
+                elif target_resolved.match(prot) or (target_resolved.name == prot):
+                    matches = True
+                elif "*" in prot and target_resolved.match(f"**/{prot}"):
+                    matches = True
+
+                if matches:
                     AuditService.record_event(
                         db=db,
                         workspace_id=workspace_id,
@@ -104,12 +115,12 @@ class PolicyEngine:
                         event_type="action_denied",
                         action=f"{action_type}:{tool_name}",
                         decision="DENY",
-                        reason=f"Attempted write/execute to protected path '{prot}' was blocked by Shield Mode",
-                        details={"target_path": target_path, "protected_rule": prot}
+                        reason=f"Attempted {action_type} to protected path '{prot}' was blocked by Shield Mode",
+                        details={"target_path": target_path, "protected_rule": prot, "action_type": action_type}
                     )
                     return PolicyEvaluationResult(
                         decision="DENY",
-                        reason=f"Shield Mode Protection: Modifying or executing protected path '{prot}' is strictly denied.",
+                        reason=f"Shield Mode Protection: Accessing ({action_type}) protected path '{prot}' is strictly denied.",
                         risk_level="HIGH",
                         violated_rule="PROTECTED_PATH_VIOLATION"
                     )
