@@ -221,6 +221,7 @@ export const App: React.FC = () => {
               onStartNew={handleStartInvestigation}
               initialSubTab={investigationSubTab}
               selectedFindingId={selectedFindingId}
+              onTriggerPolicyBlock={handleTriggerPolicyBlock}
             />
           )}
 
