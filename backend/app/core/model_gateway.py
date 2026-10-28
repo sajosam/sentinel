@@ -9,42 +9,75 @@ from app.core.audit_service import AuditService
 
 class ModelGateway:
     def __init__(self):
-        self.provider = settings.MODEL_PROVIDER.lower()
-        self.base_url = settings.MODEL_BASE_URL
-        self.api_key = settings.MODEL_API_KEY
-        self.model_name = settings.MODEL_NAME
         self.timeout = settings.MODEL_TIMEOUT_SECONDS
         self.max_retries = settings.MODEL_MAX_RETRIES
+        self._cached_client: Optional[OpenAI] = None
+        self._cached_key: Optional[str] = None
+        self._cached_url: Optional[str] = None
 
-        self._client: Optional[OpenAI] = None
-        if self.provider in ["meta", "openai"] and self.api_key:
+    def _get_client(self) -> Optional[OpenAI]:
+        current_key = settings.active_api_key
+        current_url = settings.active_base_url
+
+        if not current_key:
+            return None
+
+        # Re-initialize client if credentials or base URL changed
+        if self._cached_client is None or self._cached_key != current_key or self._cached_url != current_url:
             try:
-                self._client = OpenAI(
-                    base_url=self.base_url,
-                    api_key=self.api_key,
+                self._cached_client = OpenAI(
+                    base_url=current_url,
+                    api_key=current_key,
                     timeout=self.timeout,
                     max_retries=self.max_retries
                 )
+                self._cached_key = current_key
+                self._cached_url = current_url
             except Exception as e:
-                print(f"[ModelGateway] Error initializing client: {e}")
+                print(f"[ModelGateway] Error initializing client for {settings.active_provider}: {e}")
+                return None
+
+        return self._cached_client
 
     def is_configured(self) -> bool:
-        return bool(self._client and self.api_key)
+        return bool(settings.active_api_key and len(settings.active_api_key.strip()) > 0)
 
-    def generate_json(self, system_prompt: str, user_content: str) -> Dict[str, Any]:
+    def _deduce_task_type(self, system_prompt: str) -> str:
+        prompt_lower = system_prompt.lower()
+        if "remediation" in prompt_lower or "fix & verify" in prompt_lower or "unified diff" in prompt_lower:
+            return "remediation"
+        if "attack" in prompt_lower or "threatlens" in prompt_lower:
+            return "reasoning"
+        if "verification review" in prompt_lower or "verification reviewer" in prompt_lower:
+            return "verification"
+        if "planning" in prompt_lower or "investigation plan" in prompt_lower:
+            return "planning"
+        if "interpret" in prompt_lower or "finding" in prompt_lower or "auditor" in prompt_lower:
+            return "reasoning"
+        return "general"
+
+    def generate_json(self, system_prompt: str, user_content: str, task_type: Optional[str] = None) -> Dict[str, Any]:
         """
         Generates a structured JSON response from the model.
+        Automatically routes to:
+          - Demo Provider (Groq Llama models) in 'demo' mode
+          - Production Provider (Meta Model API: Muse Spark, Muse Wonder, Muse Code) in 'prod' mode
         Redacts sensitive context prior to calling remote APIs.
         Falls back to intelligent local heuristics if remote API is unconfigured or fails.
         """
         clean_user_content = AuditService.redact(user_content)
         start_time = time.time()
 
-        if self.is_configured():
+        resolved_task = task_type or self._deduce_task_type(system_prompt)
+        model_name = settings.get_model_for_task(resolved_task)
+        client = self._get_client()
+
+        if self.is_configured() and client is not None:
+            print(f"[ModelGateway] [{settings.active_env.upper()} | Provider: {settings.active_provider.upper()}] Invoking {model_name} for task '{resolved_task}'...")
             for attempt in range(self.max_retries + 1):
                 try:
-                    response = self._client.chat.completions.create(
-                        model=self.model_name,
+                    response = client.chat.completions.create(
+                        model=model_name,
                         messages=[
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": clean_user_content}
@@ -56,12 +89,13 @@ class ModelGateway:
                     return self._clean_and_parse_json(raw_text)
                 except Exception as e:
                     if attempt == self.max_retries:
-                        print(f"[ModelGateway] Model API call failed after retries: {e}. Falling back to deterministic reasoning engine.")
+                        print(f"[ModelGateway] [{settings.active_provider.upper()}] Model call failed ({e}). Falling back to deterministic engine.")
                         break
                     time.sleep(1)
 
-        # Deterministic Fallback Engine (Guarantees reliable operation even offline)
+        # Deterministic Fallback Engine (Guarantees reliable operation even offline or zero-key)
         return self._fallback_reasoning(system_prompt, clean_user_content)
+
 
     def _clean_and_parse_json(self, raw_text: str) -> Dict[str, Any]:
         text = raw_text.strip()

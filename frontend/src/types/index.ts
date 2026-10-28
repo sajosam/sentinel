@@ -189,5 +189,27 @@ export interface SystemHealth {
     model_name: string;
     configured: boolean;
     base_url: string;
+    deploy_env?: 'demo' | 'prod' | string;
+    is_prod?: boolean;
+    active_provider?: string;
+    models?: Record<string, string>;
+    demo_config?: {
+      provider: string;
+      base_url: string;
+      planning_model: string;
+      reasoning_model: string;
+      code_model: string;
+      fast_model: string;
+    };
+    prod_config?: {
+      provider: string;
+      base_url: string;
+      planning_model: string;
+      reasoning_model: string;
+      code_model: string;
+      fast_model: string;
+      vision_model?: string;
+    };
   };
 }
+
