@@ -414,15 +414,15 @@ ${(currentInvestigation.steps || [])
           </div>
         </div>
 
-        {/* 2. 6-Stage Sub-Navigation Tabs */}
+        {/* Sub-Navigation Tabs */}
         <div className="flex flex-wrap items-center gap-1.5 border-t border-[#283149]/60 pt-3">
           {[
-            { id: 'init', label: '1. Initialization (1.1-1.5)', icon: FolderCheck },
-            { id: 'bodyguard', label: '2. Active Guard (2.1-2.5)', icon: Shield },
-            { id: 'timeline', label: `3. Scan Timeline (${steps.length})`, icon: Clock },
-            { id: 'attack_paths', label: `4. Attack Paths (${attackPaths.length})`, icon: Network },
-            { id: 'fix_verify', label: `5. Auto-Fix & Verify (${verifiedFixedCount} fixed)`, icon: Wrench },
-            { id: 'audit', label: `6. Audit Ledger (${auditEvents.length})`, icon: ScrollText },
+            { id: 'init', label: 'Initialization', icon: FolderCheck },
+            { id: 'bodyguard', label: 'Active Guard', icon: Shield },
+            { id: 'timeline', label: `Scan Timeline (${steps.length})`, icon: Clock },
+            { id: 'attack_paths', label: `Attack Paths (${attackPaths.length})`, icon: Network },
+            { id: 'fix_verify', label: `Auto-Fix & Verify (${verifiedFixedCount} fixed)`, icon: Wrench },
+            { id: 'audit', label: `Audit Ledger (${auditEvents.length})`, icon: ScrollText },
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeSubTab === tab.id;
@@ -445,7 +445,7 @@ ${(currentInvestigation.steps || [])
         </div>
       </div>
 
-      {/* 3. Closed-Loop Final Report Card */}
+      {/* Closed-Loop Final Report Card */}
       {currentInvestigation?.summary && (
         <div className="p-4 rounded-xl border border-[#36D6B0]/25 bg-[#36D6B0]/10 text-xs text-[#E8ECF5] space-y-2">
           <div className="flex items-center justify-between">
@@ -463,24 +463,23 @@ ${(currentInvestigation.steps || [])
         </div>
       )}
 
-      {/* 4. Tab Views (Stages 1 through 6) */}
+      {/* Tab Views */}
 
-      {/* STAGE 1: INITIALIZATION & WORKSPACE ONBOARDING (1.1 - 1.5) */}
+      {/* WORKSPACE INITIALIZATION & BOUNDARY PROVISIONING */}
       {activeSubTab === 'init' && (
         <div className="space-y-4">
           <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-1">
-            <h2 className="text-sm font-semibold text-[#E8ECF5]">Stage 1: Workspace Initialization & Boundary Provisioning</h2>
+            <h2 className="text-sm font-semibold text-[#E8ECF5]">Workspace Initialization & Boundary Provisioning</h2>
             <p className="text-xs text-[#9AA6BF]">
               Deterministic path locking, polyglot language discovery, AgentFence perimeter setup, and initial ledger registration.
             </p>
           </div>
 
           <div className="grid grid-cols-1 gap-3">
-            {/* 1.1 */}
+            {/* Path Canonicalization */}
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[#8B7CFF] font-semibold">1.1</span>
                   <span className="font-semibold text-[#E8ECF5]">Path Canonicalization & Resolution</span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
@@ -495,11 +494,10 @@ ${(currentInvestigation.steps || [])
               </div>
             </div>
 
-            {/* 1.2 */}
+            {/* Polyglot Discovery */}
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[#8B7CFF] font-semibold">1.2</span>
                   <span className="font-semibold text-[#E8ECF5]">Polyglot Language Discovery</span>
                   <span className="text-[10px] text-[#8B7CFF] bg-[#8B7CFF]/10 px-1.5 py-0.5 rounded font-mono">Meta Muse Spark Open</span>
                 </div>
@@ -516,11 +514,10 @@ ${(currentInvestigation.steps || [])
               </div>
             </div>
 
-            {/* 1.3 */}
+            {/* Boundary Setup */}
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[#8B7CFF] font-semibold">1.3</span>
                   <span className="font-semibold text-[#E8ECF5]">AgentFence Boundary Setup</span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
@@ -539,11 +536,10 @@ ${(currentInvestigation.steps || [])
               </div>
             </div>
 
-            {/* 1.4 */}
+            {/* Shield Mode */}
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[#8B7CFF] font-semibold">1.4</span>
                   <span className="font-semibold text-[#E8ECF5]">Shield Mode Auto-Provisioning</span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
@@ -555,11 +551,10 @@ ${(currentInvestigation.steps || [])
               </p>
             </div>
 
-            {/* 1.5 */}
+            {/* Initial Ledger Entry */}
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[#8B7CFF] font-semibold">1.5</span>
                   <span className="font-semibold text-[#E8ECF5]">Initial Ledger Entry (The "Birth Certificate")</span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
@@ -577,12 +572,12 @@ ${(currentInvestigation.steps || [])
         </div>
       )}
 
-      {/* STAGE 2: ACTIVE RUNTIME GUARD (AGENTFENCE) (2.1 - 2.5) */}
+      {/* ACTIVE RUNTIME GUARD (AGENTFENCE) */}
       {activeSubTab === 'bodyguard' && (
         <div className="space-y-4">
           <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-[#E8ECF5]">Stage 2: Active Runtime Guard (AgentFence)</h2>
+              <h2 className="text-sm font-semibold text-[#E8ECF5]">Active Runtime Guard (AgentFence)</h2>
               <p className="text-xs text-[#9AA6BF] mt-0.5">
                 Real-time interception of AI coding agents (Claude, Antigravity, Cursor) preventing unauthorized file reads, writes, and path escapes.
               </p>
@@ -600,11 +595,10 @@ ${(currentInvestigation.steps || [])
           </div>
 
           <div className="grid grid-cols-1 gap-3">
-            {/* 2.1 */}
+            {/* Tool Invocation Interception */}
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[#8B7CFF] font-semibold">2.1</span>
                   <span className="font-semibold text-[#E8ECF5]">Agent Tool Invocation Interception</span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
@@ -624,11 +618,10 @@ ${(currentInvestigation.steps || [])
               </div>
             </div>
 
-            {/* 2.2 */}
+            {/* Read & Write Blocker */}
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[#8B7CFF] font-semibold">2.2</span>
                   <span className="font-semibold text-[#E8ECF5]">Bi-directional Read & Write Blocker</span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/20">
@@ -640,11 +633,10 @@ ${(currentInvestigation.steps || [])
               </p>
             </div>
 
-            {/* 2.3 */}
+            {/* Path Traversal Guard */}
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[#8B7CFF] font-semibold">2.3</span>
                   <span className="font-semibold text-[#E8ECF5]">Path Traversal Escape Guard</span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
@@ -656,11 +648,10 @@ ${(currentInvestigation.steps || [])
               </p>
             </div>
 
-            {/* 2.4 */}
+            {/* Secret Redaction */}
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[#8B7CFF] font-semibold">2.4</span>
                   <span className="font-semibold text-[#E8ECF5]">Live In-Memory Secret Redaction</span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#8B7CFF]/10 text-[#8B7CFF] border border-[#8B7CFF]/20">
@@ -672,11 +663,10 @@ ${(currentInvestigation.steps || [])
               </p>
             </div>
 
-            {/* 2.5 */}
+            {/* Denial Toast */}
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[#8B7CFF] font-semibold">2.5</span>
                   <span className="font-semibold text-[#E8ECF5]">Real-Time Denial Toast Notifications</span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
@@ -691,18 +681,18 @@ ${(currentInvestigation.steps || [])
         </div>
       )}
 
-      {/* STAGE 3: SCAN TIMELINE (3.1 - 3.6) */}
+      {/* SCAN TIMELINE */}
       {activeSubTab === 'timeline' && (
         <div className="space-y-4">
           <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-1">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-[#E8ECF5]">Stage 3: Autonomous Investigation & Scanning</h2>
+              <h2 className="text-sm font-semibold text-[#E8ECF5]">Autonomous Investigation & Scanning</h2>
               <span className="text-[11px] text-[#8B7CFF] bg-[#8B7CFF]/10 px-2 py-0.5 rounded font-mono font-medium">
                 Meta Muse Spark Series
               </span>
             </div>
             <p className="text-xs text-[#9AA6BF]">
-              Multi-step investigation: 3.1 Planning (Muse Spark), 3.2 Secrets (Gitleaks), 3.3 SAST (Semgrep), 3.4 CVEs (OSV), 3.5 AST Dataflow Trace, and 3.6 Prompt Shield Probes.
+              Autonomous multi-phase investigation: Planning (Muse Spark), Secrets Detection (Gitleaks), Static Analysis (Semgrep), Dependency CVEs (OSV), AST Dataflow Tracing, and Prompt Shield Probes.
             </p>
           </div>
 
@@ -799,12 +789,12 @@ ${(currentInvestigation.steps || [])
         </div>
       )}
 
-      {/* STAGE 4: ATTACK PATHS (4.1 - 4.4) */}
+      {/* ATTACK PATHS */}
       {activeSubTab === 'attack_paths' && (
         <div className="space-y-6">
           <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-1">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-[#E8ECF5]">Stage 4: Attack-Path Reasoning & ThreatLens</h2>
+              <h2 className="text-sm font-semibold text-[#E8ECF5]">Attack-Path Reasoning & ThreatLens</h2>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-[#8B7CFF] bg-[#8B7CFF]/10 px-2 py-0.5 rounded font-mono font-medium">
                   Meta Muse Wonder
@@ -815,7 +805,7 @@ ${(currentInvestigation.steps || [])
               </div>
             </div>
             <p className="text-xs text-[#9AA6BF]">
-              4.1 Multi-Hop Exploit Chains (Muse Wonder), 4.2 Interactive Graph, 4.3 Visual Architecture (Muse Image), and 4.4 Asset Redaction (SAM 3.1).
+              Multi-hop exploit correlation (Meta Muse Wonder), interactive topology graph, visual architecture rendering (Meta Muse Image), and automated credential redaction (Meta SAM 3.1).
             </p>
           </div>
 
@@ -882,19 +872,19 @@ ${(currentInvestigation.steps || [])
         </div>
       )}
 
-      {/* STAGE 5: AUTO-FIX & VERIFY (5.1 - 5.5) */}
+      {/* AUTO-FIX & VERIFY */}
       {activeSubTab === 'fix_verify' && (
         <div className="space-y-6">
           <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-[#E8ECF5]">Stage 5: Automated Closed-Loop Remediation & Verification</h2>
+                <h2 className="text-sm font-semibold text-[#E8ECF5]">Automated Closed-Loop Remediation & Verification</h2>
                 <span className="text-[10px] text-[#8B7CFF] bg-[#8B7CFF]/10 px-2 py-0.5 rounded font-mono font-medium">
                   Meta Muse Code
                 </span>
               </div>
               <p className="text-xs text-[#9AA6BF] mt-0.5">
-                5.1 Surgical Patching (Muse Code), 5.2 Boundary Validation, 5.3 Diff Viewer, 5.4 Test Verification, and 5.5 Rollback.
+                Surgical vulnerability patching (Meta Muse Code), boundary policy validation, unified diff preview, automated test verification, and one-click rollback.
               </p>
             </div>
 
@@ -1034,18 +1024,18 @@ ${(currentInvestigation.steps || [])
         </div>
       )}
 
-      {/* STAGE 6: GOVERNANCE, AUDIT & REPORTING (6.1 - 6.3) */}
+      {/* GOVERNANCE, AUDIT & REPORTING */}
       {activeSubTab === 'audit' && (
         <div className="space-y-4">
           <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-1">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-[#E8ECF5]">Stage 6: Governance, Audit & Reporting</h2>
+              <h2 className="text-sm font-semibold text-[#E8ECF5]">Governance, Audit & Reporting</h2>
               <span className="text-[10px] text-[#8B7CFF] bg-[#8B7CFF]/10 px-2 py-0.5 rounded font-mono font-medium">
                 Meta Muse Spark (Reports)
               </span>
             </div>
             <p className="text-xs text-[#9AA6BF]">
-              6.1 Tamper-Evident SQLite Ledger, 6.2 Closed-Loop Executive Report, and 6.3 1-Click Clipboard/JSON Export.
+              Tamper-evident audit ledger, closed-loop executive report generation, and instant clipboard and JSON export.
             </p>
           </div>
 
