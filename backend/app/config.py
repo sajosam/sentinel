@@ -1,4 +1,4 @@
-import os
+import shutil
 from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -54,10 +54,11 @@ class Settings(BaseSettings):
     MODEL_TIMEOUT_SECONDS: int = 60
     MODEL_MAX_RETRIES: int = 2
     
-    # Scanner Paths (Auto-discovered or customized)
-    GITLEAKS_PATH: str = "/opt/homebrew/bin/gitleaks"
-    SEMGREP_PATH: str = "/opt/homebrew/bin/semgrep"
-    OSV_SCANNER_PATH: str = "/opt/homebrew/bin/osv-scanner"
+    # Scanner Paths (Auto-discovered across macOS Homebrew, Linux, and Docker)
+    GITLEAKS_PATH: str = shutil.which("gitleaks") or "/opt/homebrew/bin/gitleaks"
+    SEMGREP_PATH: str = shutil.which("semgrep") or "/opt/homebrew/bin/semgrep"
+    OSV_SCANNER_PATH: str = shutil.which("osv-scanner") or "/opt/homebrew/bin/osv-scanner"
+
     
     # Investigation limits
     MAX_GRAPH_STEPS: int = 12

@@ -5,24 +5,47 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: sentinel-backend
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
       - HOST=0.0.0.0
       - PORT=8000
-      - DATABASE_URL=sqlite:///./sentinel.db
-      - MODEL_PROVIDER=meta
-      - MODEL_NAME=llama-3.3-70b-versatile
+      - DATABASE_URL=sqlite:////app/sentinel.db
+      - DEMO_LAB_DIR=/app/demo_lab
     volumes:
       - ./demo_lab:/app/demo_lab
-      - ./data:/app/data
+      - ./sentinel.db:/app/sentinel.db
+      - ./.env:/app/.env
+    restart: unless-stopped
+
+  sentinel-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sentinel-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://sentinel-backend:8000
+    depends_on:
+      - sentinel-backend
+    volumes:
+      - ./frontend/src:/app/src
+    restart: unless-stopped
 
   demo-lab:
     build:
       context: ./demo_lab
       dockerfile: Dockerfile
+    container_name: sentinel-demo-lab
     ports:
       - "8001:8001"
     environment:
       - HOST=0.0.0.0
       - PORT=8001
+    volumes:
+      - ./demo_lab:/app
+    restart: unless-stopped

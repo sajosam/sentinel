@@ -12,8 +12,18 @@ router = APIRouter(prefix="/demo", tags=["SentinelOS Security Lab Demo"])
 
 
 def get_demo_lab_dir() -> Path:
-    # Resolves to /Users/mac/github/sential/demo_lab
-    return Path(__file__).resolve().parent.parent.parent.parent.parent / "demo_lab"
+    if os.environ.get("DEMO_LAB_DIR"):
+        return Path(os.environ["DEMO_LAB_DIR"]).resolve()
+    for candidate in [
+        Path.cwd() / "demo_lab",
+        Path(__file__).resolve().parent.parent.parent.parent.parent / "demo_lab",
+        Path(__file__).resolve().parent.parent.parent / "demo_lab",
+        Path("/app/demo_lab"),
+    ]:
+        if candidate.exists():
+            return candidate.resolve()
+    return (Path(__file__).resolve().parent.parent.parent.parent.parent / "demo_lab").resolve()
+
 
 
 @router.post("/setup")
