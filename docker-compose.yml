@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: sentinel-backend
     ports:
-      - "8000:8000"
+      - "8005:8000"
     env_file:
       - .env
     environment:
@@ -15,6 +15,9 @@ services:
       - PORT=8000
       - DATABASE_URL=sqlite:////app/sentinel.db
       - DEMO_LAB_DIR=/app/demo_lab
+      - GITLEAKS_PATH=gitleaks
+      - SEMGREP_PATH=semgrep
+      - OSV_SCANNER_PATH=osv-scanner
     volumes:
       - ./demo_lab:/app/demo_lab
       - ./sentinel.db:/app/sentinel.db
