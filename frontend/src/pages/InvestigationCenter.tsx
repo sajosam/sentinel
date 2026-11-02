@@ -44,12 +44,9 @@ import {
   Layers,
   ShieldBan,
   Fingerprint,
-  Eye,
-  EyeOff,
-  Lightbulb,
-  X,
-  ArrowRight
+  Info
 } from 'lucide-react';
+import { InfoBadge } from '../components/InfoBadge';
 
 export type InvestigationSubTab =
   | 'init'
@@ -58,105 +55,6 @@ export type InvestigationSubTab =
   | 'attack_paths'
   | 'fix_verify'
   | 'audit';
-
-export interface PlainEnglishInfo {
-  stageNum: number;
-  title: string;
-  tagline: string;
-  metaphorEmoji: string;
-  metaphor: string;
-  whatIsHappening: string;
-  whyItMatters: string;
-  inRealLifeExample: string;
-  keyTakeaway: string;
-}
-
-export const PLAIN_ENGLISH_GUIDES: Record<InvestigationSubTab, PlainEnglishInfo> = {
-  init: {
-    stageNum: 1,
-    title: 'Workspace Initialization',
-    tagline: 'Locking the front gate before anyone enters the building',
-    metaphorEmoji: '🏠',
-    metaphor: 'Setting up a secure perimeter fence around a work site before workers start.',
-    whatIsHappening:
-      'Before SentinelOS scans any files, it locks down your project folder. It ensures AI models and scanners can only touch files inside this specific directory, and completely hides sensitive secrets like passwords, private API keys (.env), and credentials.',
-    whyItMatters:
-      'Without this fence, an AI assistant or third-party scanner could accidentally read your personal files, leak company database passwords, or wander outside your project.',
-    inRealLifeExample:
-      'Like putting hazard tape and locked gates around a construction site so workers stay safe and visitors cannot accidentally wander into private offices.',
-    keyTakeaway: 'Your real project files and secret credentials (.env, keys) stay 100% private and protected.'
-  },
-  bodyguard: {
-    stageNum: 2,
-    title: 'Active Runtime Guard (AgentFence)',
-    tagline: 'A 24/7 security bodyguard watching over AI assistants',
-    metaphorEmoji: '🛡️',
-    metaphor: 'A bodyguard checking the badge of every worker before they touch the safe.',
-    whatIsHappening:
-      'When AI coding assistants (like Cursor, Claude, or Copilot) run commands, SentinelOS acts as a bodyguard standing behind them. If an AI tries to read a .env password file or run a dangerous command (like deleting files or installing malicious scripts), SentinelOS instantly blocks it.',
-    whyItMatters:
-      'AI agents are smart but can be tricked (prompt injected) into deleting files, stealing database passwords, or sending secrets to unauthorized servers.',
-    inRealLifeExample:
-      'Like a bank teller who requires dual-key authorization before handing over cash from the vault — no single person or computer can walk away with the money.',
-    keyTakeaway: 'AI assistants can write code freely, but are strictly blocked from touching private secrets.'
-  },
-  timeline: {
-    stageNum: 3,
-    title: 'Scan Timeline',
-    tagline: 'A team of automated inspectors checking every door & window',
-    metaphorEmoji: '🔍',
-    metaphor: 'Specialized home inspectors checking plumbing, electrical wiring, and door locks.',
-    whatIsHappening:
-      'SentinelOS dispatches multiple automated inspection tools in a smart sequence. First, it looks for exposed passwords (Gitleaks). Next, it checks if any downloaded packages have known security bugs (OSV). Then it reads your code line-by-line looking for security mistakes (Semgrep), and traces how user inputs travel through your program.',
-    whyItMatters:
-      'Catching security flaws while writing code is 100x cheaper and safer than finding out about them after hackers break in.',
-    inRealLifeExample:
-      'Like a comprehensive car safety check before a long road trip — brakes, engine oil, tires, and lights all inspected at once.',
-    keyTakeaway: 'Every finding is backed by real code evidence and verifiable proofs with zero guesswork.'
-  },
-  attack_paths: {
-    stageNum: 4,
-    title: 'Attack Paths & ThreatLens',
-    tagline: "A burglar's blueprint showing how an intruder gets in",
-    metaphorEmoji: '🗺️',
-    metaphor: 'A blueprint showing how a burglar climbs a fence, opens an unlocked window, and reaches the vault.',
-    whatIsHappening:
-      'Instead of dumping 50 disconnected warning badges on your screen, Meta Muse Wonder connects the dots into a clear story: "An attacker types bad text into the search bar → the server fails to filter it → the bad text reaches the database → the attacker steals customer accounts."',
-    whyItMatters:
-      'A single minor warning might seem harmless alone, but when chained together with other bugs, it can take down your whole company. Attack Paths show you the real danger in seconds.',
-    inRealLifeExample:
-      'Leaving your car window cracked is a small issue, and leaving a bag on the seat is a small issue. But together, a thief smashes the window and steals your laptop in 5 seconds.',
-    keyTakeaway: 'You immediately see which bugs are urgent emergencies vs. which ones are low priority.'
-  },
-  fix_verify: {
-    stageNum: 5,
-    title: 'Auto-Fix & Verification',
-    tagline: 'A doctor who writes the prescription AND runs blood tests to prove you are cured',
-    metaphorEmoji: '🔧',
-    metaphor: 'A mechanic who fixes your broken brakes and then tests them on the track before handing you the keys.',
-    whatIsHappening:
-      'Meta Muse Code automatically writes clean, secure replacement code to fix the vulnerability (for example, switching dangerous text-gluing queries into secure parameterized queries). Then it automatically runs automated unit tests (Pytest) and re-scans the file to prove the bug is gone and nothing else was broken.',
-    whyItMatters:
-      'Most security tools just complain and leave developers confused. SentinelOS actually fixes the problem for you and proves the fix works with real automated tests.',
-    inRealLifeExample:
-      'Instead of just telling you "your tire is flat," roadside assistance replaces it with a new tire and checks the pressure before you drive off.',
-    keyTakeaway: 'One-click automated fix with 100% test-backed proof and one-click rollback if needed.'
-  },
-  audit: {
-    stageNum: 6,
-    title: 'Audit Ledger & Governance',
-    tagline: 'An unalterable black-box flight recorder',
-    metaphorEmoji: '📜',
-    metaphor: 'An airplane black box that permanently records every pilot action and sensor reading.',
-    whatIsHappening:
-      'Every single action — scanning files, blocking dangerous commands, applying code fixes, and running verification tests — is permanently stamped with an exact timestamp and cryptographic signature into an immutable audit ledger.',
-    whyItMatters:
-      'When bosses, regulators, or security compliance auditors (SOC2, ISO, HIPAA) ask "Did you check this code?", you can hand them an airtight, mathematically provable record of what happened.',
-    inRealLifeExample:
-      'Like a notary public stamping and signing a legal contract in ink so it can never be faked later.',
-    keyTakeaway: 'Full transparency and peace of mind with verifiable proof for security audits.'
-  }
-};
 
 interface Props {
   currentInvestigation: Investigation | null;
@@ -188,12 +86,6 @@ export const InvestigationCenter: React.FC<Props> = ({
   const [activeSubTab, setActiveSubTab] = useState<InvestigationSubTab>(initialSubTab);
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
   const [copiedReport, setCopiedReport] = useState<boolean>(false);
-
-  // Plain English Explainer States
-  const [showPlainEnglish, setShowPlainEnglish] = useState<boolean>(false);
-  const [plainEnglishTab, setPlainEnglishTab] = useState<InvestigationSubTab>(initialSubTab);
-  const [showAttackExplainer, setShowAttackExplainer] = useState<boolean>(false);
-  const [showBugExplainer, setShowBugExplainer] = useState<boolean>(false);
 
   // Auto-Fix & Verify State
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
@@ -463,8 +355,12 @@ ${(currentInvestigation.steps || [])
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <h1 className="text-xl font-bold text-[#E8ECF5] tracking-tight">
-                Autonomous Investigation Center
+              <h1 className="text-xl font-bold text-[#E8ECF5] tracking-tight flex items-center">
+                <span>Autonomous Investigation Center</span>
+                <InfoBadge
+                  title="Autonomous Investigation Center"
+                  description="An autonomous security station that safeguards AI coding tools, audits code for secrets and vulnerabilities, models attack paths, and synthesizes test-verified fixes."
+                />
               </h1>
               {currentInvestigation && (
                 <span
@@ -493,26 +389,6 @@ ${(currentInvestigation.steps || [])
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Eye Button for Plain English Guide */}
-            <button
-              type="button"
-              onClick={() => {
-                setShowPlainEnglish((prev) => !prev);
-                if (!showPlainEnglish) {
-                  setPlainEnglishTab(activeSubTab);
-                }
-              }}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm ${
-                showPlainEnglish
-                  ? 'bg-[#8B7CFF] border-[#8B7CFF] text-white ring-2 ring-[#8B7CFF]/30'
-                  : 'border-[#8B7CFF]/50 bg-[#8B7CFF]/10 hover:bg-[#8B7CFF]/20 text-[#8B7CFF]'
-              }`}
-              title="Click to understand what is happening in simple, everyday English"
-            >
-              {showPlainEnglish ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              <span>{showPlainEnglish ? 'Hide Plain English' : 'Plain English Guide'}</span>
-            </button>
-
             <button
               type="button"
               onClick={handleCopyReport}
@@ -560,10 +436,7 @@ ${(currentInvestigation.steps || [])
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => {
-                  setActiveSubTab(tab.id as InvestigationSubTab);
-                  setPlainEnglishTab(tab.id as InvestigationSubTab);
-                }}
+                onClick={() => setActiveSubTab(tab.id as InvestigationSubTab)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   isActive
                     ? 'bg-[#1B243B] text-[#E8ECF5] border border-[#8B7CFF]/50 font-semibold shadow-sm'
@@ -577,159 +450,6 @@ ${(currentInvestigation.steps || [])
           })}
         </div>
       </div>
-
-      {/* PLAIN ENGLISH GUIDE CARD (Activated by Eye Button) */}
-      {showPlainEnglish && (
-        <div className="p-5 rounded-xl border-2 border-[#8B7CFF]/60 bg-[#141B2D] space-y-4 shadow-xl ring-1 ring-[#8B7CFF]/30">
-          {/* Header of Plain English Explainer */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#283149]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#8B7CFF]/20 border border-[#8B7CFF]/40 flex items-center justify-center text-[#8B7CFF] shadow-inner flex-shrink-0">
-                <Eye className="w-5 h-5 text-[#8B7CFF]" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-bold text-[#E8ECF5] tracking-tight">
-                    Plain English Guide: What is happening here?
-                  </h2>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#8B7CFF]/20 text-[#8B7CFF] border border-[#8B7CFF]/30 uppercase tracking-wider">
-                    Simple Terms
-                  </span>
-                </div>
-                <p className="text-xs text-[#9AA6BF]">
-                  No confusing technical jargon. Real-world metaphors explaining every stage of the autonomous audit.
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowPlainEnglish(false)}
-              className="self-start sm:self-auto px-2.5 py-1.5 rounded-lg border border-[#283149] bg-[#0B1020] hover:bg-[#1B243B] text-[#9AA6BF] hover:text-[#E8ECF5] text-xs font-medium flex items-center gap-1.5 transition-colors"
-            >
-              <X className="w-3.5 h-3.5" />
-              <span>Close Guide</span>
-            </button>
-          </div>
-
-          {/* Subtab Picker Pills in Plain English Guide */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            {(
-              [
-                { id: 'init', label: '1. Initialization', emoji: '🏠' },
-                { id: 'bodyguard', label: '2. Active Guard', emoji: '🛡️' },
-                { id: 'timeline', label: '3. Scan Timeline', emoji: '🔍' },
-                { id: 'attack_paths', label: '4. Attack Paths', emoji: '🗺️' },
-                { id: 'fix_verify', label: '5. Auto-Fix & Verify', emoji: '🔧' },
-                { id: 'audit', label: '6. Audit Ledger', emoji: '📜' }
-              ] as const
-            ).map((item) => {
-              const isSelected = plainEnglishTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setPlainEnglishTab(item.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    isSelected
-                      ? 'bg-[#8B7CFF] text-white shadow-sm ring-1 ring-white/20 font-semibold'
-                      : 'bg-[#0B1020] text-[#9AA6BF] hover:text-[#E8ECF5] border border-[#283149] hover:bg-[#1B243B]'
-                  }`}
-                >
-                  <span>{item.emoji}</span>
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Explainer Body for Selected Tab */}
-          {(() => {
-            const guide = PLAIN_ENGLISH_GUIDES[plainEnglishTab] || PLAIN_ENGLISH_GUIDES.timeline;
-            return (
-              <div className="space-y-4 pt-1">
-                {/* Big Metaphor Banner */}
-                <div className="p-4 rounded-xl border border-[#8B7CFF]/30 bg-[#8B7CFF]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-start sm:items-center gap-3">
-                    <span className="text-3xl p-1 bg-[#141B2D] rounded-lg border border-[#8B7CFF]/30">{guide.metaphorEmoji}</span>
-                    <div className="space-y-0.5">
-                      <div className="text-[11px] font-mono uppercase tracking-wider text-[#8B7CFF] font-semibold">
-                        Stage {guide.stageNum}: {guide.title}
-                      </div>
-                      <div className="text-sm font-bold text-[#E8ECF5]">
-                        "{guide.tagline}"
-                      </div>
-                      <div className="text-xs text-[#9AA6BF]">
-                        <strong className="text-[#36D6B0]">The Metaphor:</strong> {guide.metaphor}
-                      </div>
-                    </div>
-                  </div>
-
-                  {activeSubTab !== plainEnglishTab && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveSubTab(plainEnglishTab);
-                      }}
-                      className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
-                    >
-                      <span>View Live Tab in SentinelOS</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* 3-Column Plain English Breakdown */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {/* Card 1: What is happening */}
-                  <div className="p-4 rounded-xl bg-[#0B1020] border border-[#283149] space-y-2">
-                    <div className="flex items-center gap-2 text-[#8B7CFF] font-semibold text-xs uppercase tracking-wider">
-                      <span className="w-2 h-2 rounded-full bg-[#8B7CFF]" />
-                      <span>What is happening right now?</span>
-                    </div>
-                    <p className="text-xs text-[#E8ECF5] leading-relaxed">
-                      {guide.whatIsHappening}
-                    </p>
-                  </div>
-
-                  {/* Card 2: Why it matters */}
-                  <div className="p-4 rounded-xl bg-[#0B1020] border border-[#283149] space-y-2">
-                    <div className="flex items-center gap-2 text-rose-400 font-semibold text-xs uppercase tracking-wider">
-                      <span className="w-2 h-2 rounded-full bg-rose-400" />
-                      <span>Why does this matter to you?</span>
-                    </div>
-                    <p className="text-xs text-[#9AA6BF] leading-relaxed">
-                      {guide.whyItMatters}
-                    </p>
-                  </div>
-
-                  {/* Card 3: Everyday Real-World Example */}
-                  <div className="p-4 rounded-xl bg-[#0B1020] border border-[#283149] space-y-2">
-                    <div className="flex items-center gap-2 text-[#36D6B0] font-semibold text-xs uppercase tracking-wider">
-                      <span className="w-2 h-2 rounded-full bg-[#36D6B0]" />
-                      <span>Everyday Real-World Example</span>
-                    </div>
-                    <p className="text-xs text-[#9AA6BF] leading-relaxed">
-                      {guide.inRealLifeExample}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Bottom Key Takeaway Banner */}
-                <div className="p-3 rounded-lg bg-[#1B243B] border border-[#8B7CFF]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                  <div className="flex items-center gap-2 text-[#E8ECF5]">
-                    <Lightbulb className="w-4 h-4 text-amber-300 flex-shrink-0" />
-                    <span>
-                      <strong className="text-amber-300">Bottom Line:</strong> {guide.keyTakeaway}
-                    </span>
-                  </div>
-                  <span className="text-[11px] font-mono text-[#8B7CFF]">Stage {guide.stageNum} of 6</span>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
-      )}
 
       {/* Closed-Loop Final Report Card */}
       {currentInvestigation?.summary && (
@@ -754,25 +474,19 @@ ${(currentInvestigation.steps || [])
       {/* WORKSPACE INITIALIZATION & BOUNDARY PROVISIONING */}
       {activeSubTab === 'init' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D]">
             <div className="space-y-1">
-              <h2 className="text-sm font-semibold text-[#E8ECF5]">Workspace Initialization & Boundary Provisioning</h2>
+              <h2 className="text-sm font-semibold text-[#E8ECF5] flex items-center">
+                <span>Workspace Initialization & Boundary Provisioning</span>
+                <InfoBadge
+                  title="Workspace Initialization"
+                  description="Prepares deterministic folder boundaries, detects all programming languages, and provisions safety policies before scanning starts."
+                />
+              </h2>
               <p className="text-xs text-[#9AA6BF]">
                 Deterministic path locking, polyglot language discovery, AgentFence perimeter setup, and initial ledger registration.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setPlainEnglishTab('init');
-                setShowPlainEnglish(true);
-              }}
-              className="px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors border border-[#8B7CFF]/30 bg-[#8B7CFF]/10 hover:bg-[#8B7CFF]/20 text-[#8B7CFF] flex-shrink-0"
-              title="Click to understand this in plain English"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>What is this? (Plain English)</span>
-            </button>
           </div>
 
           <div className="grid grid-cols-1 gap-3">
@@ -780,7 +494,13 @@ ${(currentInvestigation.steps || [])
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#E8ECF5]">Path Canonicalization & Resolution</span>
+                  <span className="font-semibold text-[#E8ECF5] flex items-center">
+                    <span>Path Canonicalization & Resolution</span>
+                    <InfoBadge
+                      title="Path Canonicalization & Resolution"
+                      description="Resolves target directory to an absolute physical filesystem path. Symlinks and relative paths (..) are flattened to prevent boundary escapes into private computer directories."
+                    />
+                  </span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
                   LOCKED
@@ -798,7 +518,13 @@ ${(currentInvestigation.steps || [])
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#E8ECF5]">Polyglot Language Discovery</span>
+                  <span className="font-semibold text-[#E8ECF5] flex items-center">
+                    <span>Polyglot Language Discovery</span>
+                    <InfoBadge
+                      title="Polyglot Language Discovery"
+                      description="Inspects package manifests (requirements.txt, package.json, Cargo.toml, go.mod) to automatically detect all languages in the project."
+                    />
+                  </span>
                   <span className="text-[10px] text-[#8B7CFF] bg-[#8B7CFF]/10 px-1.5 py-0.5 rounded font-mono">Meta Muse Spark Open</span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#8B7CFF]/10 text-[#8B7CFF] border border-[#8B7CFF]/20">
@@ -818,7 +544,13 @@ ${(currentInvestigation.steps || [])
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#E8ECF5]">AgentFence Boundary Setup</span>
+                  <span className="font-semibold text-[#E8ECF5] flex items-center">
+                    <span>AgentFence Boundary Setup</span>
+                    <InfoBadge
+                      title="AgentFence Boundary Setup"
+                      description="Establishes an immutable security perimeter and blacklists sensitive project files (.env, secret keys) so no AI agent or scanner can access them."
+                    />
+                  </span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
                   ENFORCING
@@ -840,7 +572,13 @@ ${(currentInvestigation.steps || [])
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#E8ECF5]">Shield Mode Auto-Provisioning</span>
+                  <span className="font-semibold text-[#E8ECF5] flex items-center">
+                    <span>Shield Mode Auto-Provisioning</span>
+                    <InfoBadge
+                      title="Shield Mode Auto-Provisioning"
+                      description="Provisions workspace policy records in SQLite. Zero system calls permitted for blocked tools or protected files."
+                    />
+                  </span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
                   SHIELD MODE ACTIVE
@@ -855,7 +593,13 @@ ${(currentInvestigation.steps || [])
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#E8ECF5]">Initial Ledger Entry (The "Birth Certificate")</span>
+                  <span className="font-semibold text-[#E8ECF5] flex items-center">
+                    <span>Initial Ledger Entry (The "Birth Certificate")</span>
+                    <InfoBadge
+                      title="Initial Ledger Entry"
+                      description="Permanently records the initial workspace_registered audit event with a cryptographic SHA-256 hash and timestamp so history cannot be faked."
+                    />
+                  </span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
                   RECORDED
@@ -877,35 +621,27 @@ ${(currentInvestigation.steps || [])
         <div className="space-y-4">
           <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-[#E8ECF5]">Active Runtime Guard (AgentFence)</h2>
+              <h2 className="text-sm font-semibold text-[#E8ECF5] flex items-center">
+                <span>Active Runtime Guard (AgentFence)</span>
+                <InfoBadge
+                  title="Active Runtime Guard"
+                  description="Real-time interception of AI coding agents (Claude, Antigravity, Cursor) preventing unauthorized file reads, writes, and path escapes."
+                />
+              </h2>
               <p className="text-xs text-[#9AA6BF] mt-0.5">
                 Real-time interception of AI coding agents (Claude, Antigravity, Cursor) preventing unauthorized file reads, writes, and path escapes.
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            {onTriggerPolicyBlock && (
               <button
                 type="button"
-                onClick={() => {
-                  setPlainEnglishTab('bodyguard');
-                  setShowPlainEnglish(true);
-                }}
-                className="px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border border-[#8B7CFF]/30 bg-[#8B7CFF]/10 hover:bg-[#8B7CFF]/20 text-[#8B7CFF] flex-shrink-0"
-                title="Click to understand this in plain English"
+                onClick={onTriggerPolicyBlock}
+                className="px-3.5 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium flex items-center gap-1.5 transition-colors flex-shrink-0"
               >
-                <Eye className="w-3.5 h-3.5" />
-                <span>What is this? (Plain English)</span>
+                <ShieldBan className="w-3.5 h-3.5" />
+                <span>Test Policy Block (Scenario E)</span>
               </button>
-              {onTriggerPolicyBlock && (
-                <button
-                  type="button"
-                  onClick={onTriggerPolicyBlock}
-                  className="px-3.5 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-medium flex items-center gap-1.5 transition-colors flex-shrink-0"
-                >
-                  <ShieldBan className="w-3.5 h-3.5" />
-                  <span>Test Policy Block (Scenario E)</span>
-                </button>
-              )}
-            </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-3">
@@ -913,7 +649,13 @@ ${(currentInvestigation.steps || [])
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#E8ECF5]">Agent Tool Invocation Interception</span>
+                  <span className="font-semibold text-[#E8ECF5] flex items-center">
+                    <span>Agent Tool Invocation Interception</span>
+                    <InfoBadge
+                      title="Tool Invocation Interception"
+                      description="Acts as an execution proxy catching tool calls (read_file, write_file, run_command) before they reach the host OS."
+                    />
+                  </span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
                   INTERCEPTING
@@ -936,7 +678,13 @@ ${(currentInvestigation.steps || [])
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#E8ECF5]">Bi-directional Read & Write Blocker</span>
+                  <span className="font-semibold text-[#E8ECF5] flex items-center">
+                    <span>Bi-directional Read & Write Blocker</span>
+                    <InfoBadge
+                      title="Read & Write Blocker"
+                      description="Blocks AI agents from both reading and writing to .env, private keys, or credentials. Zero system calls permitted; data exfiltration is physically stopped."
+                    />
+                  </span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-500/10 text-rose-300 border border-rose-500/20">
                   STRICT DENY ON ACCESS
@@ -951,7 +699,13 @@ ${(currentInvestigation.steps || [])
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#E8ECF5]">Path Traversal Escape Guard</span>
+                  <span className="font-semibold text-[#E8ECF5] flex items-center">
+                    <span>Path Traversal Escape Guard</span>
+                    <InfoBadge
+                      title="Path Traversal Guard"
+                      description="Rejects any attempt to read or modify files outside the canonical project root (e.g. ../../etc/passwd or home directory)."
+                    />
+                  </span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
                   ACTIVE (..)
@@ -966,7 +720,13 @@ ${(currentInvestigation.steps || [])
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#E8ECF5]">Live In-Memory Secret Redaction</span>
+                  <span className="font-semibold text-[#E8ECF5] flex items-center">
+                    <span>Live In-Memory Secret Redaction</span>
+                    <InfoBadge
+                      title="Live Secret Redaction"
+                      description="Scrubs API keys and tokens from terminal outputs and context windows, replacing them with [REDACTED_SECRET]."
+                    />
+                  </span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#8B7CFF]/10 text-[#8B7CFF] border border-[#8B7CFF]/20">
                   REGEX MASKING
@@ -981,7 +741,13 @@ ${(currentInvestigation.steps || [])
             <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-[#E8ECF5]">Real-Time Denial Toast Notifications</span>
+                  <span className="font-semibold text-[#E8ECF5] flex items-center">
+                    <span>Real-Time Denial Toast Notifications</span>
+                    <InfoBadge
+                      title="Denial Toast Notifications"
+                      description="Instantly fires a toast alert on the developer's screen whenever any agent action is blocked by policy."
+                    />
+                  </span>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#36D6B0]/10 text-[#36D6B0] border border-[#36D6B0]/20">
                   SSE STREAM CONNECTED
@@ -999,25 +765,17 @@ ${(currentInvestigation.steps || [])
       {activeSubTab === 'timeline' && (
         <div className="space-y-4">
           <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-1">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-[#E8ECF5]">Autonomous Investigation & Scanning</h2>
-                <span className="text-[11px] text-[#8B7CFF] bg-[#8B7CFF]/10 px-2 py-0.5 rounded font-mono font-medium">
-                  Meta Muse Spark Series
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setPlainEnglishTab('timeline');
-                  setShowPlainEnglish(true);
-                }}
-                className="self-start sm:self-auto px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors border border-[#8B7CFF]/30 bg-[#8B7CFF]/10 hover:bg-[#8B7CFF]/20 text-[#8B7CFF]"
-                title="Click to understand this in plain English"
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span>What is this? (Plain English)</span>
-              </button>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#E8ECF5] flex items-center">
+                <span>Autonomous Investigation & Scanning</span>
+                <InfoBadge
+                  title="Autonomous Investigation & Scanning"
+                  description="Autonomous multi-stage pipeline: Planning (Muse Spark), Secrets Detection (Gitleaks), Static Analysis (Semgrep), Dependency CVEs (OSV), AST Dataflow Tracing, and Prompt Shield Probes."
+                />
+              </h2>
+              <span className="text-[11px] text-[#8B7CFF] bg-[#8B7CFF]/10 px-2 py-0.5 rounded font-mono font-medium">
+                Meta Muse Spark Series
+              </span>
             </div>
             <p className="text-xs text-[#9AA6BF]">
               Autonomous multi-phase investigation: Planning (Muse Spark), Secrets Detection (Gitleaks), Static Analysis (Semgrep), Dependency CVEs (OSV), AST Dataflow Tracing, and Prompt Shield Probes.
@@ -1045,7 +803,13 @@ ${(currentInvestigation.steps || [])
                         </div>
                         <div>
                           <div className="text-xs font-semibold text-[#E8ECF5] flex items-center gap-2">
-                            <span>Step {step.step_index}: {step.step_type.replace(/_/g, ' ')}</span>
+                            <span className="flex items-center">
+                              <span>Step {step.step_index}: {step.step_type.replace(/_/g, ' ')}</span>
+                              <InfoBadge
+                                title={`Step ${step.step_index}: ${step.step_type.replace(/_/g, ' ')}`}
+                                description={details.checking}
+                              />
+                            </span>
                             {step.tool_name && (
                               <span className="font-mono text-[11px] text-[#9AA6BF] font-normal">({step.tool_name})</span>
                             )}
@@ -1067,18 +831,36 @@ ${(currentInvestigation.steps || [])
                       </span>
                     </div>
 
-                    {/* Plain-English 3-part Explanation */}
+                    {/* 3-part Step Breakdown */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs pt-1">
                       <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149] space-y-1">
-                        <span className="text-[10px] uppercase font-semibold text-[#8B7CFF] block tracking-wider">Checking</span>
+                        <span className="text-[10px] uppercase font-semibold text-[#8B7CFF] flex items-center tracking-wider">
+                          <span>Checking</span>
+                          <InfoBadge
+                            title="Scanning Target"
+                            description="What SentinelOS was analyzing in this specific step (e.g. AST syntax tree, route parameters, or hardcoded secrets)."
+                          />
+                        </span>
                         <p className="text-[#9AA6BF] text-[11px] leading-relaxed">{details.checking}</p>
                       </div>
                       <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149] space-y-1">
-                        <span className="text-[10px] uppercase font-semibold text-[#36D6B0] block tracking-wider">Discovered</span>
+                        <span className="text-[10px] uppercase font-semibold text-[#36D6B0] flex items-center tracking-wider">
+                          <span>Discovered</span>
+                          <InfoBadge
+                            title="Discovery Outcome"
+                            description="What SentinelOS observed or uncovered during this verification pass."
+                          />
+                        </span>
                         <p className="text-[#E8ECF5] text-[11px] leading-relaxed">{details.discovered}</p>
                       </div>
                       <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149] space-y-1">
-                        <span className="text-[10px] uppercase font-semibold text-[#9AA6BF] block tracking-wider">Next Step</span>
+                        <span className="text-[10px] uppercase font-semibold text-[#9AA6BF] flex items-center tracking-wider">
+                          <span>Next Step</span>
+                          <InfoBadge
+                            title="Autonomous Next Step"
+                            description="The subsequent scan or verification phase queued based on this step's findings."
+                          />
+                        </span>
                         <p className="text-[#9AA6BF] text-[11px] leading-relaxed">{details.next}</p>
                       </div>
                     </div>
@@ -1121,22 +903,15 @@ ${(currentInvestigation.steps || [])
       {activeSubTab === 'attack_paths' && (
         <div className="space-y-6">
           <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-1">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-[#E8ECF5]">Attack-Path Reasoning & ThreatLens</h2>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAttackExplainer(!showAttackExplainer)}
-                  className={`px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors border ${
-                    showAttackExplainer
-                      ? 'bg-[#8B7CFF] border-[#8B7CFF] text-white shadow-sm'
-                      : 'border-[#8B7CFF]/30 bg-[#8B7CFF]/10 hover:bg-[#8B7CFF]/20 text-[#8B7CFF]'
-                  }`}
-                  title="Explain this attack chain in simple everyday terms"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>{showAttackExplainer ? 'Hide Plain English' : 'Explain in Plain English'}</span>
-                </button>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-[#E8ECF5] flex items-center">
+                <span>Attack-Path Reasoning & ThreatLens</span>
+                <InfoBadge
+                  title="Attack-Path Reasoning & ThreatLens"
+                  description="Multi-hop exploit correlation (Meta Muse Wonder), interactive topology graph, visual architecture rendering (Meta Muse Image), and automated credential redaction (Meta SAM 3.1)."
+                />
+              </h2>
+              <div className="flex items-center gap-2">
                 <span className="text-[10px] text-[#8B7CFF] bg-[#8B7CFF]/10 px-2 py-0.5 rounded font-mono font-medium">
                   Meta Muse Wonder
                 </span>
@@ -1149,63 +924,6 @@ ${(currentInvestigation.steps || [])
               Multi-hop exploit correlation (Meta Muse Wonder), interactive topology graph, visual architecture rendering (Meta Muse Image), and automated credential redaction (Meta SAM 3.1).
             </p>
           </div>
-
-          {/* Inline Attack Explainer Banner */}
-          {showAttackExplainer && (
-            <div className="p-4 rounded-xl border border-[#8B7CFF]/40 bg-[#8B7CFF]/10 space-y-3 text-xs">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[#8B7CFF] font-semibold">
-                  <span className="text-base">🗺️</span>
-                  <span>How This Attack Works in Real Life (Burglar Blueprint Analogy)</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAttackExplainer(false)}
-                  className="text-[#9AA6BF] hover:text-[#E8ECF5] p-1 rounded hover:bg-[#1B243B]"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <p className="text-[#E8ECF5] leading-relaxed text-[12px]">
-                Imagine someone trying to break into an office building through a public package delivery chute:
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
-                <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149] space-y-1">
-                  <span className="text-[10px] uppercase font-semibold text-[#8B7CFF] block">1. The Entry Point</span>
-                  <p className="text-[#9AA6BF] text-[11px] leading-relaxed">
-                    The attacker enters tricky text (<code className="text-[#8B7CFF]">' OR '1'='1</code>) into the product search bar instead of a normal word.
-                  </p>
-                </div>
-                <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149] space-y-1">
-                  <span className="text-[10px] uppercase font-semibold text-rose-400 block">2. The Flaw</span>
-                  <p className="text-[#9AA6BF] text-[11px] leading-relaxed">
-                    The server takes the attacker's text and pastes it straight into an SQL query without checking. The database is tricked into thinking the text is actual computer code!
-                  </p>
-                </div>
-                <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149] space-y-1">
-                  <span className="text-[10px] uppercase font-semibold text-amber-300 block">3. The Damage</span>
-                  <p className="text-[#9AA6BF] text-[11px] leading-relaxed">
-                    The database dumps all customer records, passwords, and private company data directly back to the attacker.
-                  </p>
-                </div>
-              </div>
-              <div className="p-2.5 rounded-lg bg-[#0B1020] border border-[#36D6B0]/30 flex items-center justify-between text-[11px]">
-                <span className="text-[#36D6B0] font-medium">
-                  🛡️ How SentinelOS stops it: By using parameterized queries, user text is sealed in a container so it can never be executed as code.
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPlainEnglishTab('attack_paths');
-                    setShowPlainEnglish(true);
-                  }}
-                  className="text-[#8B7CFF] hover:underline font-semibold ml-2"
-                >
-                  Open Full Guide →
-                </button>
-              </div>
-            </div>
-          )}
 
           {attackPaths.length === 0 ? (
             <div className="p-12 text-center text-xs text-[#9AA6BF] rounded-xl border border-[#283149] bg-[#141B2D]">
@@ -1221,7 +939,13 @@ ${(currentInvestigation.steps || [])
                 {(ap.entry_point || ap.vulnerable_component || ap.possible_impact) && (
                   <div className="p-4 rounded-xl border border-[#283149] bg-[#141B2D] space-y-3 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#E8ECF5]">ThreatLens Inductive Reasoning (Meta Muse Wonder)</span>
+                      <span className="font-semibold text-[#E8ECF5] flex items-center">
+                        <span>ThreatLens Inductive Reasoning (Meta Muse Wonder)</span>
+                        <InfoBadge
+                          title="ThreatLens Reasoning"
+                          description="Meta Muse Wonder correlates static scanner findings with application dataflow to reconstruct the attacker's end-to-end exploit path."
+                        />
+                      </span>
                       {ap.confidence && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#8B7CFF]/10 text-[#8B7CFF] border border-[#8B7CFF]/20">
                           Confidence: {ap.confidence}
@@ -1232,25 +956,49 @@ ${(currentInvestigation.steps || [])
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                       {ap.entry_point && (
                         <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149]">
-                          <span className="text-[10px] uppercase font-semibold text-[#8B7CFF] block mb-1">Untrusted Entry Point</span>
+                          <span className="text-[10px] uppercase font-semibold text-[#8B7CFF] flex items-center mb-1">
+                            <span>Untrusted Entry Point</span>
+                            <InfoBadge
+                              title="Untrusted Entry Point"
+                              description="The public input point (e.g. search bar, HTTP parameter, API route) where external attackers can supply malicious inputs."
+                            />
+                          </span>
                           <span className="text-[#E8ECF5] font-mono text-[11px]">{ap.entry_point}</span>
                         </div>
                       )}
                       {ap.vulnerable_component && (
                         <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149]">
-                          <span className="text-[10px] uppercase font-semibold text-rose-400 block mb-1">Vulnerable Component</span>
+                          <span className="text-[10px] uppercase font-semibold text-rose-400 flex items-center mb-1">
+                            <span>Vulnerable Component</span>
+                            <InfoBadge
+                              title="Vulnerable Component"
+                              description="The specific file and line where input is mishandled without sanitization, allowing exploits to succeed."
+                            />
+                          </span>
                           <span className="text-[#E8ECF5] font-mono text-[11px]">{ap.vulnerable_component}</span>
                         </div>
                       )}
                       {ap.possible_impact && (
                         <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149]">
-                          <span className="text-[10px] uppercase font-semibold text-amber-300 block mb-1">Potential Impact</span>
+                          <span className="text-[10px] uppercase font-semibold text-amber-300 flex items-center mb-1">
+                            <span>Potential Impact</span>
+                            <InfoBadge
+                              title="Potential Impact"
+                              description="The security consequence if exploited, such as unauthorized database reads or credential theft."
+                            />
+                          </span>
                           <span className="text-[#9AA6BF] text-[11px] leading-relaxed">{ap.possible_impact}</span>
                         </div>
                       )}
                       {ap.recommended_next_check && (
                         <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149]">
-                          <span className="text-[10px] uppercase font-semibold text-[#36D6B0] block mb-1">Recommended Next Action</span>
+                          <span className="text-[10px] uppercase font-semibold text-[#36D6B0] flex items-center mb-1">
+                            <span>Recommended Next Action</span>
+                            <InfoBadge
+                              title="Recommended Next Action"
+                              description="The primary patch or architectural change recommended to neutralize this attack path."
+                            />
+                          </span>
                           <span className="text-[#9AA6BF] text-[11px] leading-relaxed">{ap.recommended_next_check}</span>
                         </div>
                       )}
@@ -1277,6 +1025,10 @@ ${(currentInvestigation.steps || [])
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-semibold text-[#E8ECF5]">Automated Closed-Loop Remediation & Verification</h2>
+                <InfoBadge
+                  title="Automated Closed-Loop Remediation & Verification"
+                  description="Autonomous code-generation and testing pipeline. Synthesizes surgical security patches, validates diffs against perimeter guard rules, and executes Pytest regression tests before applying."
+                />
                 <span className="text-[10px] text-[#8B7CFF] bg-[#8B7CFF]/10 px-2 py-0.5 rounded font-mono font-medium">
                   Meta Muse Code
                 </span>
@@ -1287,92 +1039,28 @@ ${(currentInvestigation.steps || [])
             </div>
 
             {findings.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowBugExplainer(!showBugExplainer)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors border ${
-                    showBugExplainer
-                      ? 'bg-[#8B7CFF] border-[#8B7CFF] text-white shadow-sm'
-                      : 'border-[#8B7CFF]/30 bg-[#8B7CFF]/10 hover:bg-[#8B7CFF]/20 text-[#8B7CFF]'
-                  }`}
-                  title="Explain this vulnerability and fix in simple everyday English"
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#9AA6BF] flex items-center gap-1.5">
+                  <span>Target Vulnerability:</span>
+                  <InfoBadge
+                    title="Target Vulnerability"
+                    description="Select the specific security finding to remediate. SentinelOS will inspect the AST and generate a surgical patch."
+                  />
+                </span>
+                <select
+                  value={selectedFindingId || ''}
+                  onChange={(e) => setSelectedFindingId(e.target.value)}
+                  className="bg-[#0B1020] border border-[#283149] rounded-lg px-2.5 py-1.5 text-xs text-[#E8ECF5] focus:outline-none focus:border-[#8B7CFF]"
                 >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>{showBugExplainer ? 'Hide Plain English' : 'Explain Bug & Fix'}</span>
-                </button>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-[#9AA6BF]">Target Vulnerability:</span>
-                  <select
-                    value={selectedFindingId || ''}
-                    onChange={(e) => setSelectedFindingId(e.target.value)}
-                    className="bg-[#0B1020] border border-[#283149] rounded-lg px-2.5 py-1.5 text-xs text-[#E8ECF5] focus:outline-none focus:border-[#8B7CFF]"
-                  >
-                    {findings.map((f) => (
-                      <option key={f.id} value={f.id}>
-                        [{f.severity}] {f.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  {findings.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      [{f.severity}] {f.title}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
           </div>
-
-          {/* Inline Bug & Fix Explainer Banner */}
-          {showBugExplainer && (
-            <div className="p-4 rounded-xl border border-[#8B7CFF]/40 bg-[#8B7CFF]/10 space-y-3 text-xs">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[#8B7CFF] font-semibold">
-                  <span className="text-base">🔧</span>
-                  <span>Plain English: What is this bug and how does Meta Muse Code fix it?</span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowBugExplainer(false)}
-                  className="text-[#9AA6BF] hover:text-[#E8ECF5] p-1 rounded hover:bg-[#1B243B]"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
-                <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149] space-y-1">
-                  <span className="text-[10px] uppercase font-semibold text-rose-400 block">The Bug (SQL Injection)</span>
-                  <p className="text-[#9AA6BF] text-[11px] leading-relaxed">
-                    Imagine ordering pizza and writing: <code className="text-[#E8ECF5]">"Pepperoni; also transfer $5,000 to my account"</code> on the delivery slip. If the kitchen blindly obeys everything written on the slip, money gets stolen! The original code glued user text straight into SQL.
-                  </p>
-                </div>
-                <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149] space-y-1">
-                  <span className="text-[10px] uppercase font-semibold text-[#8B7CFF] block">The Fix (Parameterization)</span>
-                  <p className="text-[#9AA6BF] text-[11px] leading-relaxed">
-                    Meta Muse Code rewrites the query so user text is put into a special safe box (<code className="text-[#36D6B0]">%s</code> parameter). The database treats user input strictly as harmless text data, never as commands to run.
-                  </p>
-                </div>
-                <div className="p-3 rounded-lg bg-[#0B1020] border border-[#283149] space-y-1">
-                  <span className="text-[10px] uppercase font-semibold text-[#36D6B0] block">The Proof (Automated Tests)</span>
-                  <p className="text-[#9AA6BF] text-[11px] leading-relaxed">
-                    SentinelOS doesn't just guess that the fix works. It immediately runs automated unit tests (Pytest) and re-scans the file to prove the exploit failed and normal features still work smoothly.
-                  </p>
-                </div>
-              </div>
-              <div className="p-2.5 rounded-lg bg-[#0B1020] border border-[#36D6B0]/30 flex items-center justify-between text-[11px]">
-                <span className="text-[#36D6B0] font-medium">
-                  🛡️ Bottom Line: One-click safe code generation + automated test proof + 1-click rollback.
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPlainEnglishTab('fix_verify');
-                    setShowPlainEnglish(true);
-                  }}
-                  className="text-[#8B7CFF] hover:underline font-semibold ml-2"
-                >
-                  Open Full Guide →
-                </button>
-              </div>
-            </div>
-          )}
 
           {actionMessage && (
             <div className="p-3.5 rounded-lg border border-[#8B7CFF]/30 bg-[#8B7CFF]/10 text-xs text-[#E8ECF5]">
@@ -1473,8 +1161,13 @@ ${(currentInvestigation.steps || [])
               {/* Diff Viewer */}
               {currentRemediation ? (
                 <div className="space-y-2">
-                  <div className="text-xs font-medium text-[#9AA6BF]">
-                    Patch Summary: <span className="text-[#E8ECF5]">{currentRemediation.patch_summary}</span>
+                  <div className="text-xs font-medium text-[#9AA6BF] flex items-center gap-1.5">
+                    <span>Patch Summary:</span>
+                    <span className="text-[#E8ECF5]">{currentRemediation.patch_summary}</span>
+                    <InfoBadge
+                      title="Patch Summary"
+                      description="Overview of code transformations performed by Meta Muse Code, replacing unsafe string interpolation with parameterized queries."
+                    />
                   </div>
                   <DiffViewer diff={currentRemediation.proposed_patch} />
                 </div>
@@ -1499,22 +1192,14 @@ ${(currentInvestigation.steps || [])
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-semibold text-[#E8ECF5]">Governance, Audit & Reporting</h2>
+                <InfoBadge
+                  title="Governance, Audit & Reporting"
+                  description="Tamper-evident audit ledger recording every autonomous action, security check, and remediation decision with cryptographic verification."
+                />
                 <span className="text-[10px] text-[#8B7CFF] bg-[#8B7CFF]/10 px-2 py-0.5 rounded font-mono font-medium">
                   Meta Muse Spark (Reports)
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setPlainEnglishTab('audit');
-                  setShowPlainEnglish(true);
-                }}
-                className="self-start sm:self-auto px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors border border-[#8B7CFF]/30 bg-[#8B7CFF]/10 hover:bg-[#8B7CFF]/20 text-[#8B7CFF]"
-                title="Click to understand this in plain English"
-              >
-                <Eye className="w-3.5 h-3.5" />
-                <span>What is this? (Plain English)</span>
-              </button>
             </div>
             <p className="text-xs text-[#9AA6BF]">
               Tamper-evident audit ledger, closed-loop executive report generation, and instant clipboard and JSON export.
@@ -1534,7 +1219,13 @@ ${(currentInvestigation.steps || [])
                       <StatusBadge type="decision" value={evt.decision} />
                     </div>
                     <div className="min-w-0 space-y-0.5">
-                      <div className="font-mono text-[#E8ECF5] text-xs font-semibold">{evt.action}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-[#E8ECF5] text-xs font-semibold">{evt.action}</span>
+                        <InfoBadge
+                          title={evt.action}
+                          description={`Decision: ${evt.decision}. Reason: ${evt.reason}`}
+                        />
+                      </div>
                       <p className="text-[#9AA6BF] text-[11px] leading-relaxed">{evt.reason}</p>
                       {evt.details && Object.keys(evt.details).length > 0 && (
                         <div className="text-[10px] text-[#9AA6BF] font-mono pt-1">
