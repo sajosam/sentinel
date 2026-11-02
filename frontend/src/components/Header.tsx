@@ -43,7 +43,7 @@ export const Header: React.FC<Props> = ({
   }, []);
 
   return (
-    <header className="h-12 border-b border-[#283149] bg-[#141B2D] px-5 flex items-center justify-between select-none z-20 flex-shrink-0">
+    <header className="h-12 border-b border-[#283149] bg-[#141B2D] px-5 flex items-center justify-between z-20 flex-shrink-0">
       {/* Active Project Selector */}
       <div className="flex items-center gap-3">
         <span className="text-xs text-[#9AA6BF] font-medium">Project:</span>

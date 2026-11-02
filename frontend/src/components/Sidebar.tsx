@@ -35,7 +35,7 @@ export const Sidebar: React.FC<Props> = ({
   ];
 
   return (
-    <aside className="w-56 border-r border-[#283149] bg-[#141B2D] flex flex-col justify-between p-3 select-none flex-shrink-0">
+    <aside className="w-56 border-r border-[#283149] bg-[#141B2D] flex flex-col justify-between p-3 flex-shrink-0">
       <div>
         {/* Brand */}
         <div className="flex items-center gap-2.5 px-3 py-3 mb-4 border-b border-[#283149]/60">
