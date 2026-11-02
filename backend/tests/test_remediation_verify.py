@@ -8,7 +8,8 @@ from app.core.verification_engine import VerificationEngine
 
 @pytest.fixture
 def clean_demo():
-    p = (Path(__file__).parent.parent.parent / "demo_lab").resolve()
+    in_docker = Path("/app/demo_lab")
+    p = in_docker if in_docker.exists() else (Path(__file__).parent.parent.parent / "demo_lab").resolve()
     subprocess.run(["python3", str(p / "reset.py")], cwd=str(p), capture_output=True)
     yield p
     subprocess.run(["python3", str(p / "reset.py")], cwd=str(p), capture_output=True)
