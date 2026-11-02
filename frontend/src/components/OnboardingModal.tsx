@@ -164,12 +164,12 @@ export const OnboardingModal: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* Demo Project */}
+              {/* Security Lab Project */}
               <div className="p-4 rounded-xl border border-[#283149] bg-[#0B1020] space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-[#E8ECF5] flex items-center gap-2">
                     <FolderGit2 className="w-4 h-4 text-[#8B7CFF]" />
-                    SentinelOS Security Lab (Demo Project)
+                    SentinelOS Security Lab
                   </span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#8B7CFF]/15 text-[#8B7CFF] border border-[#8B7CFF]/30">Recommended</span>
                 </div>
@@ -182,7 +182,7 @@ export const OnboardingModal: React.FC<Props> = ({
                   disabled={isCreating}
                   className="w-full py-2 rounded-lg bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white font-medium transition-colors shadow-sm disabled:opacity-50"
                 >
-                  {isCreating ? 'Setting up...' : 'Use Demo Project'}
+                  {isCreating ? 'Setting up...' : 'Load Security Lab'}
                 </button>
               </div>
 

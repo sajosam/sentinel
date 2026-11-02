@@ -143,7 +143,7 @@ def browse_directories(path: Optional[str] = None):
         {"name": "Current Workspace", "path": str(Path.cwd().resolve())},
     ]
     if (Path.cwd() / "demo_lab").exists():
-        quick_locations.append({"name": "Demo Lab", "path": str((Path.cwd() / "demo_lab").resolve())})
+        quick_locations.append({"name": "Security Lab", "path": str((Path.cwd() / "demo_lab").resolve())})
     quick_locations.append({"name": "Home (~)", "path": str(home.resolve())})
 
     for loc in ["github", "Projects", "Desktop", "Documents", "Downloads", "code", "Development"]:

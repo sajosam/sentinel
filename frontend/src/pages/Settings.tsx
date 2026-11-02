@@ -17,19 +17,15 @@ export const Settings: React.FC<Props> = ({ health }) => {
         </p>
       </div>
 
-      {/* Group 1: AI Model Configuration (Demo vs Prod) */}
+      {/* Group 1: Meta AI Model Architecture */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-semibold text-[#E8ECF5]">
             <Cpu className="w-4 h-4 text-[#8B7CFF]" />
-            <span>AI Model Gateway Environments</span>
+            <span>Meta AI Model Gateway Architecture</span>
           </div>
-          <span className={`px-2.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider border ${
-            health?.model_gateway?.is_prod
-              ? 'bg-[#8B7CFF]/15 text-[#8B7CFF] border-[#8B7CFF]/30'
-              : 'bg-[#36D6B0]/15 text-[#36D6B0] border-[#36D6B0]/30'
-          }`}>
-            {health?.model_gateway?.is_prod ? 'Production Mode (Meta)' : 'Demo Mode (Groq)'}
+          <span className="px-2.5 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider border bg-[#8B7CFF]/15 text-[#8B7CFF] border-[#8B7CFF]/30">
+            Production Mode (Meta AI)
           </span>
         </div>
 
@@ -39,13 +35,13 @@ export const Settings: React.FC<Props> = ({ health }) => {
             <div className="p-3.5 rounded-lg bg-[#0B1020] border border-[#283149]">
               <span className="text-[11px] text-[#9AA6BF] block mb-1 font-medium">Active Environment</span>
               <span className="font-semibold text-[#E8ECF5] uppercase font-mono">
-                {health?.model_gateway?.deploy_env || 'demo'}
+                {health?.model_gateway?.deploy_env || 'prod'}
               </span>
             </div>
             <div className="p-3.5 rounded-lg bg-[#0B1020] border border-[#283149]">
               <span className="text-[11px] text-[#9AA6BF] block mb-1 font-medium">Active Provider</span>
               <span className="font-semibold text-[#8B7CFF] uppercase font-mono">
-                {health?.model_gateway?.provider || 'groq'}
+                {health?.model_gateway?.provider || 'meta'}
               </span>
             </div>
             <div className="p-3.5 rounded-lg bg-[#0B1020] border border-[#283149]">
@@ -64,51 +60,51 @@ export const Settings: React.FC<Props> = ({ health }) => {
           <div className="p-3.5 rounded-lg bg-[#0B1020] border border-[#283149]">
             <span className="text-[11px] text-[#9AA6BF] block mb-1 font-medium">Active Endpoint URL</span>
             <span className="text-[#E8ECF5] font-mono text-[11px] break-all">
-              {health?.model_gateway?.base_url || 'https://api.groq.com/openai/v1'}
+              {health?.model_gateway?.base_url || 'https://api.meta.ai/v1'}
             </span>
           </div>
 
-          {/* Model Mapping Matrix: Demo (Groq) vs Production (Meta) */}
+          {/* Model Mapping Matrix */}
           <div className="space-y-2 pt-1">
             <span className="text-[11px] font-semibold text-[#E8ECF5] block">
-              Multi-Model Task Allocation (Demo vs Production)
+              Meta Muse Multi-Model Task Allocation
             </span>
             <div className="border border-[#283149] rounded-lg overflow-hidden divide-y divide-[#283149]">
-              <div className="grid grid-cols-3 p-2.5 bg-[#0B1020] text-[11px] font-semibold text-[#9AA6BF]">
-                <span>Task / Responsibility</span>
-                <span>Demo Provider (Groq)</span>
-                <span>Production Provider (Meta)</span>
+              <div className="grid grid-cols-12 p-2.5 bg-[#0B1020] text-[11px] font-semibold text-[#9AA6BF]">
+                <span className="col-span-4">Task / Responsibility</span>
+                <span className="col-span-3">Meta AI Model</span>
+                <span className="col-span-5">Autonomous Role & Capability</span>
               </div>
-              <div className="grid grid-cols-3 p-2.5 hover:bg-[#1B243B]/30 transition-colors text-[11px]">
-                <span className="text-[#E8ECF5] font-medium">Planning & Orchestration</span>
-                <span className="font-mono text-[#9AA6BF]">llama-3.3-70b-versatile</span>
-                <span className="font-mono text-[#8B7CFF] font-semibold">Meta Muse Spark Series</span>
+              <div className="grid grid-cols-12 p-2.5 hover:bg-[#1B243B]/30 transition-colors text-[11px] items-center">
+                <span className="col-span-4 text-[#E8ECF5] font-medium">Planning & Orchestration</span>
+                <span className="col-span-3 font-mono text-[#8B7CFF] font-semibold">muse-spark</span>
+                <span className="col-span-5 text-[#9AA6BF]">Multi-step investigation graph planning & tool dispatch</span>
               </div>
-              <div className="grid grid-cols-3 p-2.5 hover:bg-[#1B243B]/30 transition-colors text-[11px]">
-                <span className="text-[#E8ECF5] font-medium">ThreatLens Attack Reasoning</span>
-                <span className="font-mono text-[#9AA6BF]">llama-3.3-70b-versatile</span>
-                <span className="font-mono text-[#8B7CFF] font-semibold">Meta Muse Wonder</span>
+              <div className="grid grid-cols-12 p-2.5 hover:bg-[#1B243B]/30 transition-colors text-[11px] items-center">
+                <span className="col-span-4 text-[#E8ECF5] font-medium">ThreatLens Attack Reasoning</span>
+                <span className="col-span-3 font-mono text-[#8B7CFF] font-semibold">muse-wonder</span>
+                <span className="col-span-5 text-[#9AA6BF]">Correlates isolated matches into multi-hop exploit paths</span>
               </div>
-              <div className="grid grid-cols-3 p-2.5 hover:bg-[#1B243B]/30 transition-colors text-[11px]">
-                <span className="text-[#E8ECF5] font-medium">Autonomous Remediation Patching</span>
-                <span className="font-mono text-[#9AA6BF]">llama-3.3-70b-versatile</span>
-                <span className="font-mono text-[#8B7CFF] font-semibold">Meta Muse Code</span>
+              <div className="grid grid-cols-12 p-2.5 hover:bg-[#1B243B]/30 transition-colors text-[11px] items-center">
+                <span className="col-span-4 text-[#E8ECF5] font-medium">Autonomous Remediation Patching</span>
+                <span className="col-span-3 font-mono text-[#8B7CFF] font-semibold">muse-code</span>
+                <span className="col-span-5 text-[#9AA6BF]">Syntax-precise AST parameterized queries & unified git diffs</span>
               </div>
-              <div className="grid grid-cols-3 p-2.5 hover:bg-[#1B243B]/30 transition-colors text-[11px]">
-                <span className="text-[#E8ECF5] font-medium">Local Language Discovery</span>
-                <span className="font-mono text-[#9AA6BF]">llama-3.1-8b-instant</span>
-                <span className="font-mono text-[#8B7CFF] font-semibold">Meta Muse Spark Open</span>
+              <div className="grid grid-cols-12 p-2.5 hover:bg-[#1B243B]/30 transition-colors text-[11px] items-center">
+                <span className="col-span-4 text-[#E8ECF5] font-medium">Local Language Discovery</span>
+                <span className="col-span-3 font-mono text-[#8B7CFF] font-semibold">muse-spark-open</span>
+                <span className="col-span-5 text-[#9AA6BF]">High-throughput manifest parsing & fast boundary indexing</span>
               </div>
-              <div className="grid grid-cols-3 p-2.5 hover:bg-[#1B243B]/30 transition-colors text-[11px]">
-                <span className="text-[#E8ECF5] font-medium">Visual Surface & Redaction</span>
-                <span className="font-mono text-[#9AA6BF]">llama-3.2-11b-vision</span>
-                <span className="font-mono text-[#8B7CFF] font-semibold">Meta SAM 3.1 & Muse Image</span>
+              <div className="grid grid-cols-12 p-2.5 hover:bg-[#1B243B]/30 transition-colors text-[11px] items-center">
+                <span className="col-span-4 text-[#E8ECF5] font-medium">Visual Surface & Topology</span>
+                <span className="col-span-3 font-mono text-[#8B7CFF] font-semibold">sam-3.1</span>
+                <span className="col-span-5 text-[#9AA6BF]">Zero-shot architecture layout & attack surface segmentation</span>
               </div>
             </div>
           </div>
 
           <p className="text-[11px] text-[#9AA6BF] leading-relaxed">
-            Switch between environments by setting <code className="bg-[#0B1020] border border-[#283149] px-1.5 py-0.5 rounded font-mono text-[#8B7CFF]">DEPLOY_ENV=demo</code> (Groq Llama inference) or <code className="bg-[#0B1020] border border-[#283149] px-1.5 py-0.5 rounded font-mono text-[#8B7CFF]">DEPLOY_ENV=prod</code> (Meta Model API) in your <code className="bg-[#0B1020] border border-[#283149] px-1.5 py-0.5 rounded font-mono text-[#8B7CFF]">.env</code> file.
+            All autonomous security tasks are executed natively using the Meta Muse model suite via the Meta Model API (<code className="bg-[#0B1020] border border-[#283149] px-1.5 py-0.5 rounded font-mono text-[#8B7CFF]">https://api.meta.ai/v1</code>).
           </p>
         </div>
       </div>

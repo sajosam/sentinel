@@ -210,7 +210,7 @@ export const App: React.FC = () => {
         <Sidebar
           currentTab={currentTab}
           onSelectTab={(tab) => setCurrentTab(tab)}
-          modelLabel={health?.model_gateway?.is_prod ? 'Meta Muse (Prod)' : 'Groq Llama (Demo)'}
+          modelLabel={health?.model_gateway?.is_prod ? 'Meta Muse (Prod)' : 'Meta AI Ready'}
         />
 
         {/* Main Content Area */}

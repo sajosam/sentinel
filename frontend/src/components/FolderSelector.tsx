@@ -143,7 +143,7 @@ export const FolderSelector: React.FC<Props> = ({
           <div className="flex flex-wrap gap-1.5">
             {browseData.quick_locations.map((loc) => {
               const isSelected = selectedPath === loc.path;
-              const isDemo = loc.name.toLowerCase().includes('demo');
+              const isSpecial = loc.name.toLowerCase().includes('security lab');
               return (
                 <button
                   key={loc.name}
@@ -152,12 +152,12 @@ export const FolderSelector: React.FC<Props> = ({
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 border transition-all ${
                     isSelected
                       ? 'bg-[#8B7CFF] text-white border-[#8B7CFF]'
-                      : isDemo
+                      : isSpecial
                       ? 'bg-[#8B7CFF]/15 text-[#8B7CFF] border-[#8B7CFF]/30 hover:bg-[#8B7CFF]/25'
                       : 'bg-[#141B2D] text-[#E8ECF5] border-[#283149] hover:bg-[#1B243B] hover:border-[#8B7CFF]/40'
                   }`}
                 >
-                  {isDemo ? (
+                  {isSpecial ? (
                     <Sparkles className="w-3 h-3 text-[#8B7CFF]" />
                   ) : (
                     <HardDrive className="w-3 h-3 text-[#9AA6BF]" />
