@@ -84,6 +84,30 @@ def list_workspaces(db: Session = Depends(get_db)):
     return db.query(Workspace).order_by(Workspace.created_at.desc()).all()
 
 
+@router.post("/clear-all")
+def clear_all_workspaces(db: Session = Depends(get_db)):
+    from app.db.models import (
+        Policy, Investigation, InvestigationStep,
+        Finding, Evidence, AttackPath, AttackPathNode, AttackPathEdge,
+        RemediationRun, VerificationRun, AuditEvent, ToolRun
+    )
+    db.query(VerificationRun).delete()
+    db.query(RemediationRun).delete()
+    db.query(Evidence).delete()
+    db.query(Finding).delete()
+    db.query(AttackPathEdge).delete()
+    db.query(AttackPathNode).delete()
+    db.query(AttackPath).delete()
+    db.query(InvestigationStep).delete()
+    db.query(ToolRun).delete()
+    db.query(Investigation).delete()
+    db.query(AuditEvent).delete()
+    db.query(Policy).delete()
+    deleted = db.query(Workspace).delete()
+    db.commit()
+    return {"status": "cleared", "deleted_workspaces": deleted}
+
+
 @router.get("/browse-dirs")
 def browse_directories(path: Optional[str] = None):
     # Determine base directory

@@ -6,7 +6,8 @@ import {
   ShieldBan,
   HelpCircle,
   FlaskConical,
-  FolderPlus
+  FolderPlus,
+  Trash2
 } from 'lucide-react';
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
   onTriggerPolicyBlock: () => void;
   onResetDemo: () => void;
   onOpenOnboarding: () => void;
+  onClearAll?: () => void;
 }
 
 export const Header: React.FC<Props> = ({
@@ -25,6 +27,7 @@ export const Header: React.FC<Props> = ({
   onTriggerPolicyBlock,
   onResetDemo,
   onOpenOnboarding,
+  onClearAll,
 }) => {
   const [isDemoMenuOpen, setIsDemoMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -122,6 +125,25 @@ export const Header: React.FC<Props> = ({
                 <div className="text-[10px] text-[#9AA6BF]">Restore initial vulnerable state</div>
               </div>
             </button>
+
+            {onClearAll && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDemoMenuOpen(false);
+                  if (window.confirm('Clear all workspaces and reset platform to an empty state?')) {
+                    onClearAll();
+                  }
+                }}
+                className="w-full px-3 py-2 text-left text-amber-300 hover:bg-[#1B243B] flex items-center gap-2"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-amber-400" />
+                <div>
+                  <div className="font-medium text-amber-200">Clear All (Fresh Start)</div>
+                  <div className="text-[10px] text-[#9AA6BF]">Wipe workspaces & start empty</div>
+                </div>
+              </button>
+            )}
 
             <div className="my-1 border-t border-[#283149]" />
 

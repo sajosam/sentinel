@@ -15,7 +15,12 @@ def setup_db():
 
 
 def test_create_workspace_valid():
-    workspace_path = str(Path(__file__).parent.parent.parent / "demo_lab")
+    candidate = Path(__file__).parent.parent.parent / "demo_lab"
+    if not candidate.exists():
+        candidate = Path("/app/demo_lab")
+    if not candidate.exists():
+        candidate = Path.cwd() / "demo_lab"
+    workspace_path = str(candidate.resolve())
     resp = client.post("/api/workspaces", json={
         "display_name": "SentinelOS Security Lab",
         "canonical_path": workspace_path,

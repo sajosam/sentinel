@@ -44,14 +44,19 @@ export const App: React.FC = () => {
       const h = await api.getHealth();
       setHealth(h);
 
-      let wsList = await api.listWorkspaces();
-      if (wsList.length === 0) {
-        await api.setupDemo();
-        wsList = await api.listWorkspaces();
-      }
+      const wsList = await api.listWorkspaces();
       setWorkspaces(wsList);
-      if (wsList.length > 0 && !currentWorkspace) {
-        setCurrentWorkspace(wsList[0]);
+      if (wsList.length > 0) {
+        if (!currentWorkspace || !wsList.find((w) => w.id === currentWorkspace.id)) {
+          setCurrentWorkspace(wsList[0]);
+        }
+      } else {
+        setCurrentWorkspace(null);
+        setInvestigations([]);
+        setFindings([]);
+        setAttackPaths([]);
+        setAuditEvents([]);
+        setShieldStatus(null);
       }
     } catch (e) {
       console.error('App init error:', e);
@@ -152,6 +157,22 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleClearAllWorkspaces = async () => {
+    try {
+      await api.clearAllWorkspaces();
+      setWorkspaces([]);
+      setCurrentWorkspace(null);
+      setInvestigations([]);
+      setFindings([]);
+      setAttackPaths([]);
+      setAuditEvents([]);
+      setShieldStatus(null);
+      setCurrentTab('overview');
+    } catch (e) {
+      console.error('Failed to clear workspaces:', e);
+    }
+  };
+
   const handleSelectFindingForFix = (finding: Finding) => {
     setSelectedFindingId(finding.id);
     setCurrentTab('investigations');
@@ -180,6 +201,7 @@ export const App: React.FC = () => {
         onTriggerPolicyBlock={handleTriggerPolicyBlock}
         onResetDemo={handleResetDemo}
         onOpenOnboarding={() => setIsOnboardingOpen(true)}
+        onClearAll={handleClearAllWorkspaces}
       />
 
       {/* 2. Global Frame */}
@@ -188,6 +210,7 @@ export const App: React.FC = () => {
         <Sidebar
           currentTab={currentTab}
           onSelectTab={(tab) => setCurrentTab(tab)}
+          modelLabel={health?.model_gateway?.is_prod ? 'Meta Muse (Prod)' : 'Groq Llama (Demo)'}
         />
 
         {/* Main Content Area */}

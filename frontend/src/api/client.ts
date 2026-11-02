@@ -38,6 +38,13 @@ export const api = {
     const res = await fetch(`${API_BASE}/workspaces/${id}`);
     return res.json();
   },
+  clearAllWorkspaces: async (): Promise<{ status: string; deleted_workspaces: number }> => {
+    const res = await fetch(`${API_BASE}/workspaces/clear-all`, {
+      method: 'POST'
+    });
+    if (!res.ok) throw new Error('Failed to clear workspaces');
+    return res.json();
+  },
   browseDirectories: async (path?: string): Promise<{
     current_path: string;
     current_name: string;

@@ -19,11 +19,13 @@ interface Props {
   unresolvedCount?: number;
   blockedCount?: number;
   isInvestigating?: boolean;
+  modelLabel?: string;
 }
 
 export const Sidebar: React.FC<Props> = ({
   currentTab,
-  onSelectTab
+  onSelectTab,
+  modelLabel = 'Meta Muse (Prod)'
 }) => {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -72,7 +74,7 @@ export const Sidebar: React.FC<Props> = ({
 
       {/* Model Status Footer */}
       <div className="px-3 py-2.5 border-t border-[#283149]/60 text-[11px] text-[#9AA6BF] flex items-center justify-between">
-        <span className="truncate">Meta Llama 3.3</span>
+        <span className="truncate">{modelLabel}</span>
         <span className="flex items-center gap-1.5 flex-shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-[#36D6B0]" />
           <span className="text-[10px] text-[#36D6B0] font-medium">Ready</span>

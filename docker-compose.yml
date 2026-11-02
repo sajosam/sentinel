@@ -19,6 +19,7 @@ services:
       - SEMGREP_PATH=semgrep
       - OSV_SCANNER_PATH=osv-scanner
     volumes:
+      - ./backend:/app
       - ./demo_lab:/app/demo_lab
       - ./sentinel.db:/app/sentinel.db
       - ./.env:/app/.env
