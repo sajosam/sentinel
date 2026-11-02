@@ -39,10 +39,21 @@ export const api = {
     return res.json();
   },
   clearAllWorkspaces: async (): Promise<{ status: string; deleted_workspaces: number }> => {
-    const res = await fetch(`${API_BASE}/workspaces/clear-all`, {
+    const res = await fetch(`${API_BASE}/system/clean`, {
       method: 'POST'
     });
-    if (!res.ok) throw new Error('Failed to clear workspaces');
+    if (!res.ok) throw new Error('Failed to clean platform');
+    return res.json();
+  },
+  cleanPlatform: async (): Promise<{ status: string; message: string; cleaned_records: any }> => {
+    const res = await fetch(`${API_BASE}/system/clean`, {
+      method: 'POST'
+    });
+    if (!res.ok) throw new Error('Failed to clean platform');
+    return res.json();
+  },
+  getSystemStatus: async (): Promise<any> => {
+    const res = await fetch(`${API_BASE}/system/status`);
     return res.json();
   },
   browseDirectories: async (path?: string): Promise<{

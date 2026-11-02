@@ -11,11 +11,13 @@ from app.api.endpoints import (
     tools,
     health,
     demo,
+    system,
 )
 
 api_router = APIRouter()
 
 api_router.include_router(health.router)
+api_router.include_router(system.router)
 api_router.include_router(workspaces.router)
 api_router.include_router(investigations.router)
 api_router.include_router(findings.router)
