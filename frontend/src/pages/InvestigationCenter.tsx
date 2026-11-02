@@ -784,9 +784,33 @@ ${(currentInvestigation.steps || [])
 
           <div className="border border-[#283149] rounded-xl bg-[#141B2D] divide-y divide-[#283149] overflow-hidden">
             {steps.length === 0 ? (
-              <div className="p-8 text-center text-xs text-[#9AA6BF]">
-                Investigation is preparing execution plan...
-              </div>
+              currentInvestigation && ['running', 'planning', 'pending'].includes(currentInvestigation.status) ? (
+                <div className="p-10 text-center text-xs text-[#9AA6BF] space-y-3">
+                  <div className="w-6 h-6 border-2 border-[#8B7CFF] border-t-transparent rounded-full animate-spin mx-auto" />
+                  <div className="text-sm font-semibold text-[#E8ECF5]">Autonomous Investigation In Progress</div>
+                  <p className="text-[11px] text-[#9AA6BF] max-w-sm mx-auto">
+                    Meta Muse Spark is generating execution plans and dispatching security scanner tools...
+                  </p>
+                </div>
+              ) : (
+                <div className="p-10 text-center text-xs text-[#9AA6BF] space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#8B7CFF]/10 border border-[#8B7CFF]/20 flex items-center justify-center text-[#8B7CFF] mx-auto">
+                    <Play className="w-5 h-5 fill-current ml-0.5" />
+                  </div>
+                  <div className="text-sm font-semibold text-[#E8ECF5]">No Security Scan Run Yet</div>
+                  <p className="text-[11px] text-[#9AA6BF] max-w-md mx-auto leading-relaxed">
+                    Workspace is initialized and boundary protection is active. Click below or "Run New Scan" above to start the autonomous security audit.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onStartNew()}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white text-xs font-semibold shadow-sm transition-colors mt-2"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Start Autonomous Scan</span>
+                  </button>
+                </div>
+              )
             ) : (
               steps.map((step, idx) => {
                 const isExpanded = expandedStepId === step.id;

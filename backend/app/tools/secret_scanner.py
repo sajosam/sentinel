@@ -47,11 +47,11 @@ class SecretScannerTool(BaseTool):
         try:
             cmd = [
                 gitleaks_bin,
-                "dir",
+                "detect",
+                "--source", str(workspace_path),
                 "--no-git",
                 "--report-format", "json",
                 "--report-path", report_path,
-                str(workspace_path)
             ]
             res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout_seconds)
             raw_output = res.stdout + "\n" + res.stderr
