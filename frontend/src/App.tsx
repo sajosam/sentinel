@@ -122,18 +122,26 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleStartInvestigation = async (goal?: string) => {
-    if (!currentWorkspace) {
-      setIsOnboardingOpen(true);
-      return;
+  const handleStartInvestigation = async (goal?: string, overrideWorkspaceId?: string) => {
+    let wsId = overrideWorkspaceId || currentWorkspace?.id;
+    if (!wsId) {
+      try {
+        const setupRes = await api.setupDemo();
+        const ws = await api.getWorkspace(setupRes.workspace_id);
+        setCurrentWorkspace(ws);
+        wsId = ws.id;
+      } catch (e) {
+        setIsOnboardingOpen(true);
+        return;
+      }
     }
     try {
-      await api.startInvestigation(currentWorkspace.id, goal);
+      await api.startInvestigation(wsId, goal);
       setCurrentTab('investigations');
       setInvestigationSubTab('timeline');
-      refreshData();
+      await refreshData();
     } catch (e) {
-      console.error(e);
+      console.error('Failed to start investigation:', e);
     }
   };
 

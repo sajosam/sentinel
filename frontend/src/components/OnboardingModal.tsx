@@ -11,7 +11,8 @@ import {
   AlertCircle,
   X,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 
 interface Props {
@@ -21,7 +22,7 @@ interface Props {
   workspaces: Workspace[];
   currentWorkspace: Workspace | null;
   onSelectWorkspace: (ws: Workspace) => void;
-  onStartAudit: () => void;
+  onStartAudit: (goal?: string, overrideWorkspaceId?: string) => Promise<void> | void;
   onRefreshWorkspaces: () => void;
 }
 
@@ -38,6 +39,7 @@ export const OnboardingModal: React.FC<Props> = ({
   const [projectPath, setProjectPath] = useState<string>('');
   const [projectName, setProjectName] = useState<string>('');
   const [isCreating, setIsCreating] = useState<boolean>(false);
+  const [isLaunching, setIsLaunching] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -46,11 +48,13 @@ export const OnboardingModal: React.FC<Props> = ({
     setIsCreating(true);
     setErrorMsg(null);
     try {
-      await api.setupDemo();
+      const res = await api.setupDemo();
+      const ws = await api.getWorkspace(res.workspace_id);
+      onSelectWorkspace(ws);
       onRefreshWorkspaces();
       setStep(3);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to setup demo project');
+      setErrorMsg(err.message || 'Failed to setup security lab');
     } finally {
       setIsCreating(false);
     }
@@ -80,9 +84,31 @@ export const OnboardingModal: React.FC<Props> = ({
     }
   };
 
-  const handleFinishAndScan = () => {
-    onClose();
-    onStartAudit();
+  const handleNextStep = async () => {
+    if (step === 2 && !currentWorkspace && !projectPath) {
+      await handleUseDemoProject();
+      return;
+    }
+    setStep(step + 1);
+  };
+
+  const handleFinishAndScan = async () => {
+    setIsLaunching(true);
+    setErrorMsg(null);
+    try {
+      let targetWs = currentWorkspace;
+      if (!targetWs) {
+        const res = await api.setupDemo();
+        targetWs = await api.getWorkspace(res.workspace_id);
+        onSelectWorkspace(targetWs);
+        onRefreshWorkspaces();
+      }
+      onClose();
+      await onStartAudit(undefined, targetWs.id);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to start investigation');
+      setIsLaunching(false);
+    }
   };
 
   return (
@@ -315,13 +341,37 @@ export const OnboardingModal: React.FC<Props> = ({
                 <p className="text-xs text-[#9AA6BF] mt-1 max-w-sm mx-auto leading-relaxed">
                   SentinelOS will run a multi-step investigation to discover any secrets, vulnerabilities, and dependencies.
                 </p>
+                {currentWorkspace && (
+                  <p className="text-[11px] text-[#8B7CFF] mt-1.5 font-mono">
+                    Target: {currentWorkspace.display_name} ({currentWorkspace.canonical_path})
+                  </p>
+                )}
               </div>
+
+              {errorMsg && (
+                <div className="p-3 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/20 text-xs flex items-center gap-2 max-w-sm mx-auto text-left">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={handleFinishAndScan}
-                className="w-full max-w-xs mx-auto py-2 rounded-lg bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white font-medium transition-colors shadow-sm"
+                disabled={isLaunching}
+                className="w-full max-w-xs mx-auto py-2.5 rounded-lg bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white font-medium transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
               >
-                Launch Investigation
+                {isLaunching ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Launching Investigation...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>Launch Investigation</span>
+                  </>
+                )}
               </button>
             </div>
           )}
@@ -333,7 +383,8 @@ export const OnboardingModal: React.FC<Props> = ({
             <button
               type="button"
               onClick={() => setStep(step - 1)}
-              className="px-3.5 py-1.5 rounded-lg border border-[#283149] bg-[#0B1020] text-[#9AA6BF] hover:text-[#E8ECF5] hover:bg-[#1B243B] text-xs font-medium flex items-center gap-1.5 transition-colors"
+              disabled={isLaunching || isCreating}
+              className="px-3.5 py-1.5 rounded-lg border border-[#283149] bg-[#0B1020] text-[#9AA6BF] hover:text-[#E8ECF5] hover:bg-[#1B243B] text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back</span>
@@ -345,10 +396,11 @@ export const OnboardingModal: React.FC<Props> = ({
           {step < 5 && (
             <button
               type="button"
-              onClick={() => setStep(step + 1)}
-              className="px-4 py-1.5 rounded-lg bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm"
+              onClick={handleNextStep}
+              disabled={isCreating}
+              className="px-4 py-1.5 rounded-lg bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50"
             >
-              <span>Next</span>
+              <span>{isCreating ? 'Setting up...' : 'Next'}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           )}
