@@ -400,10 +400,10 @@ class SentinelOrchestrator:
                         db, state, ver_status,
                         output={
                             "status": ver_run.status,
-                            "test_output": ver_run.test_output[:600],
-                            "scanner_recheck": ver_run.scanner_recheck_output[:600]
+                            "test_output": (getattr(ver_run, "test_output", "") or "")[:600],
+                            "message": (getattr(ver_run, "message", "") or "")[:600]
                         },
-                        reasoning=f"Verification result: {ver_run.status.upper()} (All tests passed, security check clean)."
+                        reasoning=f"Verification result: {ver_run.status.upper()}."
                     )
                     if ver_run.status == "verified_fixed":
                         verified_count = 1
