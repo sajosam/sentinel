@@ -27,3 +27,7 @@ htmlcov/
 *.log
 .env
 .DS_Store
+
+# SQLite backups
+sentinel.db.bak*
+*.db.bak*
