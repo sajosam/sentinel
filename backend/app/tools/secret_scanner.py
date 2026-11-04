@@ -22,7 +22,9 @@ class SecretScannerTool(BaseTool):
     binary_path = settings.GITLEAKS_PATH
 
     COMMON_SECRET_PATTERNS = [
-        (re.compile(r'(?i)(DEMO_API_KEY|API_KEY|SECRET_KEY|AUTH_TOKEN|PRIVATE_KEY)[\s=:"\']+(\S+)', re.IGNORECASE), "Generic API Key/Secret"),
+        # Only literal values: `KEY = os.getenv(...)` or `KEY = settings.KEY` is the fix, not a leak
+        (re.compile(r'(?i)(DEMO_API_KEY|API_KEY|SECRET_KEY|AUTH_TOKEN|PRIVATE_KEY)["\']?\s*[:=]\s*["\']([^"\'\s]{8,})["\']'), "Generic API Key/Secret"),
+        (re.compile(r'(?i)^\s*(?:export\s+)?\w*(DEMO_API_KEY|API_KEY|SECRET_KEY|AUTH_TOKEN|PRIVATE_KEY)=([^\s"\'#]{8,})\s*$'), "Generic API Key/Secret"),
         (re.compile(r'ghp_[a-zA-Z0-9]{36}', re.IGNORECASE), "GitHub Personal Access Token"),
         (re.compile(r'AKIA[0-9A-Z]{16}', re.IGNORECASE), "AWS Access Key ID"),
         (re.compile(r'-----BEGIN\s+(RSA|OPENSSH|EC|DSA)?\s*PRIVATE KEY-----', re.IGNORECASE), "Private SSH/Cryptographic Key"),

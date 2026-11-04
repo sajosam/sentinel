@@ -5,13 +5,11 @@ import { FolderSelector } from './FolderSelector';
 import {
   Shield,
   FolderGit2,
-  Lock,
-  Play,
+  GitBranch,
+  FolderOpen,
   CheckCircle2,
   AlertCircle,
   X,
-  ArrowRight,
-  ArrowLeft,
   Loader2
 } from 'lucide-react';
 
@@ -26,386 +24,188 @@ interface Props {
   onRefreshWorkspaces: () => void;
 }
 
+type Busy = null | 'demo' | 'clone' | 'local';
+
 export const OnboardingModal: React.FC<Props> = ({
   isOpen,
   onClose,
   health,
-  currentWorkspace,
   onSelectWorkspace,
   onStartAudit,
   onRefreshWorkspaces,
 }) => {
-  const [step, setStep] = useState<number>(1);
+  const [repoUrl, setRepoUrl] = useState<string>('');
   const [projectPath, setProjectPath] = useState<string>('');
   const [projectName, setProjectName] = useState<string>('');
-  const [isCreating, setIsCreating] = useState<boolean>(false);
-  const [isLaunching, setIsLaunching] = useState<boolean>(false);
+  const [busy, setBusy] = useState<Busy>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleUseDemoProject = async () => {
-    setIsCreating(true);
+  // Every option ends the same way: select the workspace and launch the investigation
+  const connectAndScan = async (kind: Busy, connect: () => Promise<Workspace>) => {
+    setBusy(kind);
     setErrorMsg(null);
     try {
-      const res = await api.setupDemo();
-      const ws = await api.getWorkspace(res.workspace_id);
+      const ws = await connect();
       onSelectWorkspace(ws);
       onRefreshWorkspaces();
-      setStep(3);
+      onClose();
+      await onStartAudit(undefined, ws.id);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to setup security lab');
+      setErrorMsg(err.message || 'Failed to connect project');
     } finally {
-      setIsCreating(false);
+      setBusy(null);
     }
   };
 
-  const handleCreateProject = async (e: React.FormEvent) => {
+  const handleDemo = () =>
+    connectAndScan('demo', async () => {
+      const res = await api.setupDemo();
+      return api.getWorkspace(res.workspace_id);
+    });
+
+  const handleClone = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projectPath) {
-      setErrorMsg('Please enter a project directory path');
-      return;
-    }
-    setIsCreating(true);
-    setErrorMsg(null);
-    try {
-      const created = await api.createWorkspace({
+    if (!repoUrl.trim()) return;
+    connectAndScan('clone', () => api.cloneWorkspace(repoUrl.trim()));
+  };
+
+  const handleLocal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!projectPath) return;
+    connectAndScan('local', () =>
+      api.createWorkspace({
         display_name: projectName || 'Local Project',
         canonical_path: projectPath,
-        protected_paths: ['.env', 'config.py', 'secrets.json']
-      });
-      onSelectWorkspace(created);
-      onRefreshWorkspaces();
-      setStep(3);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to register project');
-    } finally {
-      setIsCreating(false);
-    }
+        protected_paths: ['.env', 'secrets.json']
+      })
+    );
   };
 
-  const handleNextStep = async () => {
-    if (step === 2 && !currentWorkspace && !projectPath) {
-      await handleUseDemoProject();
-      return;
-    }
-    setStep(step + 1);
-  };
-
-  const handleFinishAndScan = async () => {
-    setIsLaunching(true);
-    setErrorMsg(null);
-    try {
-      let targetWs = currentWorkspace;
-      if (!targetWs) {
-        const res = await api.setupDemo();
-        targetWs = await api.getWorkspace(res.workspace_id);
-        onSelectWorkspace(targetWs);
-        onRefreshWorkspaces();
-      }
-      onClose();
-      await onStartAudit(undefined, targetWs.id);
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to start investigation');
-      setIsLaunching(false);
-    }
-  };
+  const gateway = health?.model_gateway;
+  const scanners = health?.scanners;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-xl bg-[#141B2D] border border-[#283149] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Modal Header */}
-        <div className="px-5 py-3.5 border-b border-[#283149] flex items-center justify-between bg-[#141B2D]">
+      <div className="w-full max-w-xl bg-[#141A24] border border-[#232B38] rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="px-5 py-3.5 border-b border-[#232B38] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-lg bg-[#8B7CFF] flex items-center justify-center text-white shadow-xs">
+            <div className="w-6 h-6 rounded-lg bg-[#3B82F6] flex items-center justify-center text-white">
               <Shield className="w-3.5 h-3.5" />
             </div>
             <div>
-              <h2 className="text-xs font-semibold text-[#E8ECF5]">Guided Setup</h2>
-              <p className="text-[10px] text-[#9AA6BF]">Step {step} of 5</p>
+              <h2 className="text-xs font-semibold text-[#E6EBF2]">Connect a project</h2>
+              <p className="text-[10px] text-[#8A97AC]">SentinelOS scans it, models attack paths, then fixes and verifies.</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-[#9AA6BF] hover:text-[#E8ECF5] p-1 rounded-lg hover:bg-[#1B243B] transition-colors"
+            className="text-[#8A97AC] hover:text-[#E6EBF2] p-1 rounded-lg hover:bg-[#1B222E] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Progress Line */}
-        <div className="w-full bg-[#1B243B] h-0.5">
-          <div
-            className="bg-[#8B7CFF] h-0.5 transition-all duration-300"
-            style={{ width: `${(step / 5) * 100}%` }}
-          />
-        </div>
+        <div className="p-5 space-y-4 overflow-y-auto text-xs">
+          {/* Readiness: real values from /api/health */}
+          <div className="flex flex-wrap gap-2 text-[11px]">
+            <ReadyChip ok={!!gateway?.configured} label={gateway?.configured ? `Model: ${gateway.model_name}` : 'Model: offline fallback'} />
+            <ReadyChip ok={!!scanners?.semgrep.installed} label="Semgrep" />
+            <ReadyChip ok={!!scanners?.gitleaks.installed} label="Gitleaks" />
+            <ReadyChip ok={!!scanners?.osv_scanner.installed} label="OSV-Scanner" />
+          </div>
 
-        {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
-          {/* STEP 1: Welcome to SentinelOS */}
-          {step === 1 && (
-            <div className="space-y-4 text-center py-2">
-              <div className="w-12 h-12 rounded-xl bg-[#0B1020] border border-[#283149] flex items-center justify-center text-[#8B7CFF] mx-auto shadow-sm">
-                <Shield className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-[#E8ECF5]">Welcome to SentinelOS</h3>
-                <p className="text-xs text-[#9AA6BF] mt-1 max-w-md mx-auto leading-relaxed">
-                  A local-first security platform for software developers using AI coding tools.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left pt-2">
-                <div className="p-3.5 rounded-lg border border-[#283149] bg-[#0B1020] space-y-1">
-                  <span className="font-semibold text-[#E8ECF5] block">1. Scan Automatically</span>
-                  <p className="text-[11px] text-[#9AA6BF] leading-relaxed">Discovers exposed secrets, code injection, and vulnerable dependencies.</p>
-                </div>
-                <div className="p-3.5 rounded-lg border border-[#283149] bg-[#0B1020] space-y-1">
-                  <span className="font-semibold text-[#E8ECF5] block">2. Enforce Protection</span>
-                  <p className="text-[11px] text-[#9AA6BF] leading-relaxed">Blocks AI tools from overwriting .env or private key files.</p>
-                </div>
-                <div className="p-3.5 rounded-lg border border-[#283149] bg-[#0B1020] space-y-1">
-                  <span className="font-semibold text-[#E8ECF5] block">3. Verify Real Fixes</span>
-                  <p className="text-[11px] text-[#9AA6BF] leading-relaxed">Reruns tests and scans to prove problems are resolved.</p>
-                </div>
-              </div>
+          {errorMsg && (
+            <div className="p-3 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/20 flex items-center gap-2">
+              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              <span>{errorMsg}</span>
             </div>
           )}
 
-          {/* STEP 2: Select Project */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-[#E8ECF5]">Select a Project</h3>
-                <p className="text-[#9AA6BF] mt-0.5">
-                  Choose a project folder on your computer for SentinelOS to protect.
-                </p>
-              </div>
-
-              {errorMsg && (
-                <div className="p-3 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/20 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span>{errorMsg}</span>
-                </div>
-              )}
-
-              {/* Security Lab Project */}
-              <div className="p-4 rounded-xl border border-[#283149] bg-[#0B1020] space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-[#E8ECF5] flex items-center gap-2">
-                    <FolderGit2 className="w-4 h-4 text-[#8B7CFF]" />
-                    SentinelOS Security Lab
-                  </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#8B7CFF]/15 text-[#8B7CFF] border border-[#8B7CFF]/30">Recommended</span>
-                </div>
-                <p className="text-[11px] text-[#9AA6BF] leading-relaxed">
-                  Pre-configured with synthetic vulnerabilities to explore all features safely in minutes.
-                </p>
-                <button
-                  type="button"
-                  onClick={handleUseDemoProject}
-                  disabled={isCreating}
-                  className="w-full py-2 rounded-lg bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white font-medium transition-colors shadow-sm disabled:opacity-50"
-                >
-                  {isCreating ? 'Setting up...' : 'Load Security Lab'}
-                </button>
-              </div>
-
-              {/* Custom Path Selection */}
-              <form onSubmit={handleCreateProject} className="space-y-3 pt-3 border-t border-[#283149]">
-                <div className="text-[11px] font-medium text-[#9AA6BF]">Or choose an existing local directory:</div>
-                <FolderSelector
-                  selectedPath={projectPath}
-                  onSelect={(path, name) => {
-                    setProjectPath(path);
-                    if (name && (!projectName || projectName === 'Local Project')) {
-                      setProjectName(name);
-                    }
-                  }}
-                />
-                <div>
-                  <label className="text-[11px] font-medium text-[#9AA6BF] block mb-1">Project Name (Optional)</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. My App"
-                    value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
-                    className="w-full px-3 py-1.5 rounded-lg border border-[#283149] bg-[#0B1020] text-[#E8ECF5] placeholder-[#9AA6BF]/50 focus:outline-none focus:border-[#8B7CFF] transition-colors text-xs"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isCreating || !projectPath}
-                  className="w-full py-2 rounded-lg border border-[#283149] bg-[#1B243B] text-[#E8ECF5] hover:bg-[#222D4A] font-medium transition-colors disabled:opacity-50"
-                >
-                  Register Project Path
-                </button>
-              </form>
+          {/* 1. Security Lab */}
+          <div className="p-4 rounded-xl border border-[#232B38] bg-[#0A0E14] space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-[#E6EBF2] flex items-center gap-2">
+                <FolderGit2 className="w-4 h-4 text-[#3B82F6]" />
+                SentinelOS Security Lab
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#3B82F6]/15 text-[#3B82F6] border border-[#3B82F6]/30">Demo</span>
             </div>
-          )}
+            <p className="text-[11px] text-[#8A97AC]">Small app with a planted secret, SQL injection, vulnerable dependency and prompt-injection endpoint.</p>
+            <button
+              type="button"
+              onClick={handleDemo}
+              disabled={busy !== null}
+              className="w-full py-2 rounded-lg bg-[#3B82F6] hover:bg-[#2F6FE0] text-white font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {busy === 'demo' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Scan Security Lab
+            </button>
+          </div>
 
-          {/* STEP 3: Check Tools & AI Model */}
-          {step === 3 && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-[#E8ECF5]">Security Scanners & AI Model</h3>
-                <p className="text-[#9AA6BF] mt-0.5">
-                  SentinelOS uses host security tools and Meta's Llama 3.3 model.
-                </p>
-              </div>
-
-              <div className="border border-[#283149] rounded-xl bg-[#0B1020] divide-y divide-[#283149] overflow-hidden">
-                <div className="p-3 flex items-center justify-between">
-                  <div>
-                    <span className="font-medium text-[#E8ECF5]">Gitleaks Secret Scanner</span>
-                    <p className="text-[11px] text-[#9AA6BF]">Detects exposed API keys and tokens in files.</p>
-                  </div>
-                  <span className="inline-flex items-center gap-1 text-[#36D6B0] font-medium text-[11px]">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Ready
-                  </span>
-                </div>
-                <div className="p-3 flex items-center justify-between">
-                  <div>
-                    <span className="font-medium text-[#E8ECF5]">Semgrep SAST Engine</span>
-                    <p className="text-[11px] text-[#9AA6BF]">Finds SQL injection and code vulnerabilities.</p>
-                  </div>
-                  <span className="inline-flex items-center gap-1 text-[#36D6B0] font-medium text-[11px]">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Ready
-                  </span>
-                </div>
-                <div className="p-3 flex items-center justify-between">
-                  <div>
-                    <span className="font-medium text-[#E8ECF5]">OSV Dependency Scanner</span>
-                    <p className="text-[11px] text-[#9AA6BF]">Audits third-party packages against known CVEs.</p>
-                  </div>
-                  <span className="inline-flex items-center gap-1 text-[#36D6B0] font-medium text-[11px]">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Ready
-                  </span>
-                </div>
-                <div className="p-3 flex items-center justify-between">
-                  <div>
-                    <span className="font-medium text-[#E8ECF5]">Meta Llama 3.3 Model</span>
-                    <p className="text-[11px] text-[#9AA6BF]">Autonomous reasoning and patch drafting.</p>
-                  </div>
-                  <span className="inline-flex items-center gap-1 text-[#36D6B0] font-medium text-[11px]">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Ready
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 4: Review Protection Rules */}
-          {step === 4 && (
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-semibold text-[#E8ECF5]">Protection Rules</h3>
-                <p className="text-[#9AA6BF] mt-0.5">
-                  AgentFence enforces these safety rules on actions performed in your projects.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-lg border border-[#283149] bg-[#0B1020] space-y-1">
-                  <div className="flex items-center gap-1.5 font-semibold text-[#E8ECF5]">
-                    <Lock className="w-3.5 h-3.5 text-[#8B7CFF]" />
-                    <span>Locked Files</span>
-                  </div>
-                  <p className="text-[11px] text-[#9AA6BF] leading-relaxed">
-                    <code className="font-mono text-[#8B7CFF] bg-[#141B2D] px-1 py-0.5 rounded border border-[#283149]">.env</code> and key files cannot be overwritten by tools without confirmation.
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-lg border border-[#283149] bg-[#0B1020] space-y-1">
-                  <div className="flex items-center gap-1.5 font-semibold text-[#E8ECF5]">
-                    <Shield className="w-3.5 h-3.5 text-[#36D6B0]" />
-                    <span>Boundary Guard</span>
-                  </div>
-                  <p className="text-[11px] text-[#9AA6BF] leading-relaxed">
-                    Directory traversal outside the workspace is strictly blocked.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 5: Start Investigation */}
-          {step === 5 && (
-            <div className="space-y-4 text-center py-4">
-              <div className="w-12 h-12 rounded-xl bg-[#0B1020] border border-[#283149] flex items-center justify-center text-[#8B7CFF] mx-auto shadow-sm">
-                <Play className="w-5 h-5 fill-current ml-0.5" />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-[#E8ECF5]">Ready to Scan</h3>
-                <p className="text-xs text-[#9AA6BF] mt-1 max-w-sm mx-auto leading-relaxed">
-                  SentinelOS will run a multi-step investigation to discover any secrets, vulnerabilities, and dependencies.
-                </p>
-                {currentWorkspace && (
-                  <p className="text-[11px] text-[#8B7CFF] mt-1.5 font-mono">
-                    Target: {currentWorkspace.display_name} ({currentWorkspace.canonical_path})
-                  </p>
-                )}
-              </div>
-
-              {errorMsg && (
-                <div className="p-3 rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/20 text-xs flex items-center gap-2 max-w-sm mx-auto text-left">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{errorMsg}</span>
-                </div>
-              )}
-
+          {/* 2. Public Git repository */}
+          <form onSubmit={handleClone} className="p-4 rounded-xl border border-[#232B38] bg-[#0A0E14] space-y-3">
+            <span className="font-semibold text-[#E6EBF2] flex items-center gap-2">
+              <GitBranch className="w-4 h-4 text-[#3B82F6]" />
+              Public Git repository
+            </span>
+            <p className="text-[11px] text-[#8A97AC]">Shallow-cloned locally. Its own code is never executed (tests are skipped).</p>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                placeholder="https://github.com/owner/repo"
+                value={repoUrl}
+                onChange={(e) => setRepoUrl(e.target.value)}
+                className="flex-1 min-w-0 px-3 py-1.5 rounded-lg border border-[#232B38] bg-[#141A24] text-[#E6EBF2] placeholder-[#8A97AC]/50 focus:outline-none focus:border-[#3B82F6] font-mono"
+              />
               <button
-                type="button"
-                onClick={handleFinishAndScan}
-                disabled={isLaunching}
-                className="w-full max-w-xs mx-auto py-2.5 rounded-lg bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white font-medium transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-60 cursor-pointer"
+                type="submit"
+                disabled={busy !== null || !repoUrl.trim()}
+                className="px-3.5 py-1.5 rounded-lg border border-[#232B38] bg-[#1B222E] text-[#E6EBF2] hover:bg-[#222B38] font-medium disabled:opacity-50 flex items-center gap-1.5"
               >
-                {isLaunching ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Launching Investigation...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>Launch Investigation</span>
-                  </>
-                )}
+                {busy === 'clone' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {busy === 'clone' ? 'Cloning…' : 'Clone & Scan'}
               </button>
             </div>
-          )}
-        </div>
+          </form>
 
-        {/* Modal Footer Controls */}
-        <div className="px-5 py-3 border-t border-[#283149] flex items-center justify-between bg-[#141B2D]">
-          {step > 1 ? (
+          {/* 3. Local folder */}
+          <form onSubmit={handleLocal} className="p-4 rounded-xl border border-[#232B38] bg-[#0A0E14] space-y-3">
+            <span className="font-semibold text-[#E6EBF2] flex items-center gap-2">
+              <FolderOpen className="w-4 h-4 text-[#3B82F6]" />
+              Local folder
+            </span>
+            <FolderSelector
+              selectedPath={projectPath}
+              onSelect={(path, name) => {
+                setProjectPath(path);
+                if (name && !projectName) setProjectName(name);
+              }}
+            />
             <button
-              type="button"
-              onClick={() => setStep(step - 1)}
-              disabled={isLaunching || isCreating}
-              className="px-3.5 py-1.5 rounded-lg border border-[#283149] bg-[#0B1020] text-[#9AA6BF] hover:text-[#E8ECF5] hover:bg-[#1B243B] text-xs font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
+              type="submit"
+              disabled={busy !== null || !projectPath}
+              className="w-full py-2 rounded-lg border border-[#232B38] bg-[#1B222E] text-[#E6EBF2] hover:bg-[#222B38] font-medium disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back</span>
+              {busy === 'local' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Scan Folder
             </button>
-          ) : (
-            <div />
-          )}
-
-          {step < 5 && (
-            <button
-              type="button"
-              onClick={handleNextStep}
-              disabled={isCreating}
-              className="px-4 py-1.5 rounded-lg bg-[#8B7CFF] hover:bg-[#7A6AE6] text-white text-xs font-medium flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50"
-            >
-              <span>{isCreating ? 'Setting up...' : 'Next'}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
+          </form>
         </div>
       </div>
     </div>
   );
 };
+
+const ReadyChip: React.FC<{ ok: boolean; label: string }> = ({ ok, label }) => (
+  <span
+    className={`inline-flex items-center gap-1 px-2 py-1 rounded border ${
+      ok ? 'border-[#10B981]/30 text-[#10B981] bg-[#10B981]/10' : 'border-amber-500/30 text-amber-300 bg-amber-500/10'
+    }`}
+  >
+    {ok ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+    {label}
+  </span>
+);

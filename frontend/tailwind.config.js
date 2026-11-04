@@ -9,23 +9,34 @@ export default {
     extend: {
       colors: {
         theme: {
-          bg: '#0B1020',
-          surface: '#141B2D',
-          surfaceHover: '#1B243B',
-          surfaceActive: '#222D4A',
-          border: '#283149',
-          borderSubtle: '#1C2438',
-          textPrimary: '#E8ECF5',
-          textSecondary: '#9AA6BF',
-          accent: '#8B7CFF',
-          accentHover: '#7A68FC',
-          protection: '#36D6B0',
-          protectionHover: '#2EC29E',
+          bg: '#0A0E14',
+          surface: '#141A24',
+          surfaceHover: '#1B222E',
+          surfaceActive: '#222B38',
+          border: '#232B38',
+          borderSubtle: '#1A212B',
+          textPrimary: '#E6EBF2',
+          textSecondary: '#8A97AC',
+          accent: '#3B82F6',
+          accentHover: '#2F6FE0',
+          accentSoft: 'rgba(59,130,246,0.14)',
+          protection: '#10B981',
+          protectionHover: '#0E9E72',
+          warn: '#F59E0B',
+          crit: '#EF4444',
         }
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace']
+      },
+      boxShadow: {
+        card: '0 1px 2px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.25)',
+        pop: '0 8px 24px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.35)',
+      },
+      borderRadius: {
+        xl: '0.75rem',
+        '2xl': '1rem',
       }
     },
   },

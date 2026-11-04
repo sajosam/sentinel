@@ -80,6 +80,12 @@ export interface Finding {
   remediation: string;
   verification_status: 'unverified' | 'fix_proposed' | 'verified_fixed' | 'unresolved';
   is_suppressed: boolean;
+  origin_commit?: string | null;
+  origin_author?: string | null;
+  origin_date?: string | null;
+  origin_subject?: string | null;
+  origin_ai_authored?: boolean;
+  origin_ai_agent?: string | null;
   created_at: string;
   evidence_items?: Evidence[];
 }
@@ -126,6 +132,7 @@ export interface Remediation {
   patch_summary: string;
   target_file: string;
   status: 'proposed' | 'applied' | 'reverted' | 'rejected';
+  generated_by?: string;
   created_at: string;
   applied_at?: string;
 }
@@ -170,7 +177,9 @@ export interface ShieldStatus {
     name: string;
     type: string;
     status: string;
+    last_seen?: string | null;
   }>;
+  hook_command?: string;
   monitored_event_types: string[];
   strictly_blocked_operations: string[];
 }
@@ -193,14 +202,6 @@ export interface SystemHealth {
     is_prod?: boolean;
     active_provider?: string;
     models?: Record<string, string>;
-    demo_config?: {
-      provider: string;
-      base_url: string;
-      planning_model: string;
-      reasoning_model: string;
-      code_model: string;
-      fast_model: string;
-    };
     prod_config?: {
       provider: string;
       base_url: string;
@@ -209,7 +210,23 @@ export interface SystemHealth {
       code_model: string;
       fast_model: string;
       vision_model?: string;
+      image_model?: string;
     };
   };
 }
 
+
+export interface AttackResult {
+  id: string;
+  workspace_id: string;
+  investigation_id?: string | null;
+  finding_id?: string | null;
+  phase: 'pre_fix' | 'post_fix';
+  exploit_name: string;
+  category: string;
+  verdict: 'BREACHED' | 'SURVIVED' | 'NOT_REACHABLE' | 'ERROR';
+  request_detail: string;
+  response_detail: string;
+  reason: string;
+  created_at: string;
+}

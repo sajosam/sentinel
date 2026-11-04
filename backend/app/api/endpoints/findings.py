@@ -5,7 +5,7 @@ from app.db.session import get_db
 from app.db.models import Finding
 from app.schemas.finding import FindingResponse
 from app.schemas.remediation import RemediationResponse, VerificationResponse
-from app.core.verification_engine import VerificationEngine
+from app.core.verification_engine import VerificationEngine, NoAutomaticFixError
 
 router = APIRouter(prefix="/findings", tags=["Findings"])
 
@@ -46,6 +46,8 @@ def get_finding(finding_id: str, db: Session = Depends(get_db)):
 def propose_finding_fix(finding_id: str, db: Session = Depends(get_db)):
     try:
         return VerificationEngine.propose_remediation(finding_id, db)
+    except NoAutomaticFixError as e:
+        raise HTTPException(status_code=422, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:

@@ -54,8 +54,8 @@ export const StatusBadge: React.FC<Props> = ({ type, value }) => {
         );
       case 'ALLOW':
         return (
-          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded border bg-[#36D6B0]/10 text-[#36D6B0] border-[#36D6B0]/30">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#36D6B0]" />
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] font-medium rounded border bg-[#10B981]/10 text-[#10B981] border-[#10B981]/30">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
             Allowed
           </span>
         );
@@ -79,13 +79,13 @@ export const StatusBadge: React.FC<Props> = ({ type, value }) => {
     switch (valUpper) {
       case 'VERIFIED_FIXED':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded border bg-[#36D6B0]/10 text-[#36D6B0] border-[#36D6B0]/30">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded border bg-[#10B981]/10 text-[#10B981] border-[#10B981]/30">
             Verified Fixed
           </span>
         );
       case 'FIX_PROPOSED':
         return (
-          <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded border bg-[#8B7CFF]/10 text-[#8B7CFF] border-[#8B7CFF]/30">
+          <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded border bg-[#3B82F6]/10 text-[#3B82F6] border-[#3B82F6]/30">
             Fix Proposed
           </span>
         );
@@ -97,7 +97,7 @@ export const StatusBadge: React.FC<Props> = ({ type, value }) => {
         );
       default:
         return (
-          <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded border bg-[#283149]/50 text-[#9AA6BF] border-[#283149]">
+          <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded border bg-[#232B38]/50 text-[#8A97AC] border-[#232B38]">
             Open
           </span>
         );
@@ -105,7 +105,7 @@ export const StatusBadge: React.FC<Props> = ({ type, value }) => {
   }
 
   return (
-    <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded border bg-[#283149]/50 text-[#9AA6BF] border-[#283149]">
+    <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded border bg-[#232B38]/50 text-[#8A97AC] border-[#232B38]">
       {value}
     </span>
   );

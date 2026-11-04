@@ -12,9 +12,9 @@ export const GraphViewer: React.FC<Props> = ({ attackPath }) => {
   const getNodeIcon = (type: string) => {
     switch (type) {
       case 'api_endpoint':
-        return <Globe className="w-4 h-4 text-[#8B7CFF]" />;
+        return <Globe className="w-4 h-4 text-[#3B82F6]" />;
       case 'source_file':
-        return <FileCode className="w-4 h-4 text-[#36D6B0]" />;
+        return <FileCode className="w-4 h-4 text-[#10B981]" />;
       case 'secret':
         return <Key className="w-4 h-4 text-amber-400" />;
       case 'database':
@@ -26,49 +26,30 @@ export const GraphViewer: React.FC<Props> = ({ attackPath }) => {
     }
   };
 
-  const getLinearSteps = () => {
-    return [
-      {
-        step: 1,
-        title: 'Untrusted Entry Point',
-        desc: 'Attacker provides unvalidated input via query parameters or API payloads.',
-        target: attackPath.nodes.find(n => n.node_type === 'api_endpoint')?.label || 'HTTP Endpoint'
-      },
-      {
-        step: 2,
-        title: 'Vulnerable Execution Path',
-        desc: 'Application code processes input directly into database queries without parameterization.',
-        target: attackPath.nodes.find(n => n.node_type === 'source_file')?.label || 'Application Handler'
-      },
-      {
-        step: 3,
-        title: 'Asset Impact',
-        desc: 'Database records, system credentials, or backend services are compromised.',
-        target: attackPath.nodes.find(n => n.node_type === 'database' || n.node_type === 'secret')?.label || 'Protected Data'
-      }
-    ];
-  };
+  const labelFor = (nodeId: string): string =>
+    attackPath.nodes.find((n) => n.id === nodeId)?.label || 'node';
+  const edges: AttackPathEdge[] = attackPath.edges || [];
 
   return (
     <div className="space-y-4">
       {/* Narrative & Score Bar */}
-      <div className="p-4 rounded-lg border border-[#283149] bg-[#141B2D] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="p-4 rounded-lg border border-[#232B38] bg-[#141A24] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-semibold text-[#E8ECF5]">{attackPath.name}</h3>
-          <p className="text-xs text-[#9AA6BF] mt-0.5 max-w-2xl">{attackPath.description}</p>
+          <h3 className="text-sm font-semibold text-[#E6EBF2]">{attackPath.name}</h3>
+          <p className="text-xs text-[#8A97AC] mt-0.5 max-w-2xl">{attackPath.description}</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className="text-xs text-[#9AA6BF] font-medium">Risk Score:</span>
-          <span className="text-base font-bold text-[#E8ECF5]">
-            {attackPath.risk_score.toFixed(1)} <span className="text-xs font-normal text-[#9AA6BF]">/ 10</span>
+          <span className="text-xs text-[#8A97AC] font-medium">Risk Score:</span>
+          <span className="text-base font-bold text-[#E6EBF2]">
+            {attackPath.risk_score.toFixed(1)} <span className="text-xs font-normal text-[#8A97AC]">/ 10</span>
           </span>
         </div>
       </div>
 
       {/* Viewport-fitting Graph Progression (Responsive flow, no horizontal overflow) */}
       <div className="space-y-2">
-        <div className="text-xs font-medium text-[#9AA6BF]">Attack Chain Progression</div>
-        <div className="p-4 rounded-lg border border-[#283149] bg-[#141B2D]">
+        <div className="text-xs font-medium text-[#8A97AC]">Attack Chain Progression</div>
+        <div className="p-4 rounded-lg border border-[#232B38] bg-[#141A24]">
           <div className="flex flex-wrap items-center gap-2">
             {attackPath.nodes.map((node, index) => {
               const isSelected = selectedNode?.id === node.id;
@@ -81,25 +62,25 @@ export const GraphViewer: React.FC<Props> = ({ attackPath }) => {
                     onClick={() => setSelectedNode(node)}
                     className={`p-3 rounded-lg border text-left transition-all flex items-center gap-2.5 ${
                       isSelected
-                        ? 'border-[#8B7CFF] bg-[#8B7CFF]/10'
-                        : 'border-[#283149] bg-[#0B1020] hover:border-[#3A4565]'
+                        ? 'border-[#3B82F6] bg-[#3B82F6]/10'
+                        : 'border-[#232B38] bg-[#0A0E14] hover:border-[#2E394B]'
                     }`}
                   >
-                    <div className="p-1.5 rounded bg-[#141B2D] border border-[#283149] flex-shrink-0">
+                    <div className="p-1.5 rounded bg-[#141A24] border border-[#232B38] flex-shrink-0">
                       {getNodeIcon(node.node_type)}
                     </div>
                     <div>
-                      <div className="text-xs font-semibold text-[#E8ECF5] leading-tight truncate max-w-[150px]">
+                      <div className="text-xs font-semibold text-[#E6EBF2] leading-tight truncate max-w-[150px]">
                         {node.label}
                       </div>
-                      <div className="text-[10px] text-[#9AA6BF] capitalize leading-tight mt-0.5">
+                      <div className="text-[10px] text-[#8A97AC] capitalize leading-tight mt-0.5">
                         {node.node_type.replace(/_/g, ' ')}
                       </div>
                     </div>
                   </button>
 
                   {!isLast && (
-                    <ArrowRight className="w-4 h-4 text-[#9AA6BF] flex-shrink-0" />
+                    <ArrowRight className="w-4 h-4 text-[#8A97AC] flex-shrink-0" />
                   )}
                 </React.Fragment>
               );
@@ -111,11 +92,11 @@ export const GraphViewer: React.FC<Props> = ({ attackPath }) => {
       {/* Bottom Grid: Node Detail + Linear Path Narrative */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Selected Component Details */}
-        <div className="p-4 rounded-lg border border-[#283149] bg-[#141B2D] space-y-3">
-          <div className="text-xs font-semibold text-[#E8ECF5] flex items-center justify-between pb-2 border-b border-[#283149]">
+        <div className="p-4 rounded-lg border border-[#232B38] bg-[#141A24] space-y-3">
+          <div className="text-xs font-semibold text-[#E6EBF2] flex items-center justify-between pb-2 border-b border-[#232B38]">
             <span>Selected Component Details</span>
             {selectedNode && (
-              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-[#0B1020] border border-[#283149] text-[#9AA6BF]">
+              <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-[#0A0E14] border border-[#232B38] text-[#8A97AC]">
                 {selectedNode.node_type}
               </span>
             )}
@@ -124,12 +105,12 @@ export const GraphViewer: React.FC<Props> = ({ attackPath }) => {
           {selectedNode ? (
             <div className="space-y-2 text-xs">
               <div>
-                <span className="text-[#9AA6BF] text-[11px] block">Component Name</span>
-                <span className="font-semibold text-[#E8ECF5]">{selectedNode.label}</span>
+                <span className="text-[#8A97AC] text-[11px] block">Component Name</span>
+                <span className="font-semibold text-[#E6EBF2]">{selectedNode.label}</span>
               </div>
               <div>
-                <span className="text-[#9AA6BF] text-[11px] block">Details & References</span>
-                <div className="p-2.5 rounded bg-[#0B1020] border border-[#283149] font-mono text-[11px] text-[#C5CEE0]">
+                <span className="text-[#8A97AC] text-[11px] block">Details & References</span>
+                <div className="p-2.5 rounded bg-[#0A0E14] border border-[#232B38] font-mono text-[11px] text-[#CBD5E6]">
                   {selectedNode.details && Object.keys(selectedNode.details).length > 0 ? (
                     <pre className="whitespace-pre-wrap">
                       {JSON.stringify(selectedNode.details, null, 2)}
@@ -141,30 +122,44 @@ export const GraphViewer: React.FC<Props> = ({ attackPath }) => {
               </div>
             </div>
           ) : (
-            <p className="text-xs text-[#9AA6BF]">Select a node above to inspect its details.</p>
+            <p className="text-xs text-[#8A97AC]">Select a node above to inspect its details.</p>
           )}
         </div>
 
-        {/* Linear Path Explanation */}
-        <div className="p-4 rounded-lg border border-[#283149] bg-[#141B2D] space-y-3">
-          <div className="text-xs font-semibold text-[#E8ECF5] pb-2 border-b border-[#283149]">
-            Step-by-Step Exploit Explanation
+        {/* Edge list: what links each step, and whether it is evidence or inference */}
+        <div className="p-4 rounded-lg border border-[#232B38] bg-[#141A24] space-y-3">
+          <div className="text-xs font-semibold text-[#E6EBF2] pb-2 border-b border-[#232B38]">
+            How the chain connects
           </div>
-          <div className="space-y-2.5 text-xs">
-            {getLinearSteps().map((s) => (
-              <div key={s.step} className="flex items-start gap-2.5">
-                <span className="w-5 h-5 rounded-full bg-[#1B243B] border border-[#283149] text-[#8B7CFF] font-semibold text-[10px] flex items-center justify-center flex-shrink-0 mt-0.5">
-                  {s.step}
-                </span>
-                <div>
-                  <div className="font-medium text-[#E8ECF5]">
-                    {s.title}: <span className="font-mono text-[#9AA6BF] text-[11px]">{s.target}</span>
+          {edges.length === 0 ? (
+            <p className="text-xs text-[#8A97AC]">No relationships recorded for this path.</p>
+          ) : (
+            <div className="space-y-2.5 text-xs">
+              {edges.map((e) => (
+                <div key={e.id} className="flex items-start gap-2.5">
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border flex-shrink-0 mt-0.5 ${
+                      e.is_inferred
+                        ? 'border-dashed border-amber-500/40 text-amber-300 bg-amber-500/10'
+                        : 'border-[#10B981]/30 text-[#10B981] bg-[#10B981]/10'
+                    }`}
+                  >
+                    {e.is_inferred ? 'INFERRED' : 'CONFIRMED'}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="font-medium text-[#E6EBF2] break-words">
+                      {labelFor(e.source_node_id)}{' '}
+                      <span className="font-mono text-[#3B82F6] text-[11px]">{e.relation_type.replace(/_/g, ' ')}</span>{' '}
+                      {labelFor(e.target_node_id)}
+                    </div>
+                    {e.evidence_reference && (
+                      <p className="text-[11px] text-[#8A97AC] mt-0.5 leading-snug">{e.evidence_reference}</p>
+                    )}
                   </div>
-                  <p className="text-[11px] text-[#9AA6BF] mt-0.5 leading-snug">{s.desc}</p>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

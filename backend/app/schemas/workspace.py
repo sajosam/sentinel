@@ -15,6 +15,11 @@ class WorkspaceCreate(WorkspaceBase):
     pass
 
 
+class WorkspaceCloneRequest(BaseModel):
+    repo_url: str = Field(..., description="Public HTTPS Git repository URL")
+    display_name: Optional[str] = None
+
+
 class WorkspaceUpdate(BaseModel):
     display_name: Optional[str] = None
     protected_paths: Optional[List[str]] = None

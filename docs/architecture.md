@@ -35,8 +35,8 @@ graph TD
             BUS[SSE Event Bus]
             
             subgraph Sentinel Intelligence Orchestrator
-                LG[LangGraph Stateful Graph]
-                MG[Model Gateway - Meta Llama / OpenAI-compatible]
+                LG[Orchestrator - sequential state machine]
+                MG[Model Gateway - Meta Model API / Muse]
                 TR[Tool Registry & Execution Gate]
                 VE[Verification Engine]
             end
@@ -86,17 +86,16 @@ graph TD
 ## 3. Component Breakdown
 
 ### A. Desktop Frontend (React + TypeScript + Vite + Tailwind CSS)
-- **10 Core Screens**:
-  1. **Onboarding & Readiness**: System check verifying host scanner binaries (`gitleaks`, `semgrep`, `osv-scanner`) and Meta model gateway configuration.
-  2. **Overview**: Executive dashboard with metric cards, recent blocked actions, severity distributions, and quick scenario triggers.
-  3. **Workspaces**: Workspace manager enforcing canonical paths and protected asset rules.
-  4. **Shield Mode (AgentFence)**: Policy mode switcher, registered AI coding agents, and real-time blocked vs monitored metrics.
-  5. **Investigation Center**: Live LangGraph workflow visualizer, step-by-step progress, LLM reasoning, collected evidence, cancellation.
-  6. **Findings**: Multi-facet filterable table/cards with code snippets, severity badges, remediation suggestions.
-  7. **Attack Paths (ThreatLens)**: Visual nodes (file, API, secret, db, vulnerability) & edges (reads, writes, calls, exposes) distinguishing confirmed vs inferred relationships.
-  8. **Fix & Verify**: Unified diff viewer, patch application in workspace boundaries, test runner rerun, before-and-after scanner comparison.
-  9. **Activity & Audit**: Immutable event timeline with filterable actions, policy decisions, and sanitized evidence.
-  10. **Settings**: Configurable Meta model (Base URL, API Key, Model ID), tool detection status, telemetry toggles.
+- **Screens** (sidebar: Overview, Investigations, Findings, Settings):
+  1. **Connect a project**: Security Lab, clone a public Git repo, or a local folder, with live scanner and model readiness.
+  2. **Overview**: metric cards, latest investigation, findings needing attention, recent enforcement.
+  3. **Investigations**, with four tabs:
+     - **Scan Timeline**: each step with the model that served it, scanner output, and the policy decision.
+     - **Attack Paths (ThreatLens)**: nodes plus edges labeled CONFIRMED or INFERRED.
+     - **Fix & Verify**: model or rule-based patch (tagged), diff, apply, verify against re-scan and baseline tests, rollback.
+     - **AgentFence & Audit**: Claude Code hook setup and status, blocked actions, full audit ledger.
+  4. **Findings**: filterable list with evidence and remediation guidance.
+  5. **Settings**: live model-per-task mapping and scanner detection.
 
 ### B. Local Security Service (FastAPI + SQLAlchemy + Pydantic v2)
 - Serves local-only API (`http://127.0.0.1:8000`).
@@ -111,7 +110,7 @@ graph TD
 - Model output **cannot** override a policy decision.
 
 ### D. Model Gateway
-- Provider-independent client configured for Meta's supported models (`llama-3.3-70b-versatile`, `meta-llama/Llama-3.3-70B-Instruct`).
+- OpenAI-compatible client for the Meta Model API (`muse-spark-1.3`, `muse-wonder-1.0`).
 - Redacts sensitive context prior to calling remote APIs.
 - Employs retry logic, timeouts, and structured JSON parsing.
 - Deterministic fallback reasoning engine ensuring full offline functionality and robust test execution.

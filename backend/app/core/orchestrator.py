@@ -23,7 +23,8 @@ from app.core.prompts import (
 )
 from app.core.tool_registry import tool_registry
 from app.core.audit_service import AuditService
-from app.core.verification_engine import VerificationEngine
+from app.core.verification_engine import VerificationEngine, NoAutomaticFixError
+from app.core.policy_engine import PolicyEngine
 from app.config import settings
 
 
@@ -107,7 +108,7 @@ class SentinelOrchestrator:
             await cls._finish_current_step(
                 db, state, "completed",
                 output=plan,
-                reasoning=f"Generated structured plan with {len(plan.get('steps', []))} steps."
+                reasoning=f"Generated structured plan with {len(plan.get('steps', []))} steps ({cls._model_label(plan)})."
             )
 
             steps_to_run = plan.get("steps", [])
@@ -211,21 +212,26 @@ class SentinelOrchestrator:
 
             # Step N+1: Adaptive Follow-up Decision (Capability 1)
             # If an unsafe SQL query or code vulnerability was detected, adaptively run targeted AST dataflow trace
-            has_sql_vulnerability = any(
-                "sql" in f.get("title", "").lower() or "injection" in f.get("title", "").lower()
-                for f in state.findings
+            sql_finding = next(
+                (
+                    f for f in state.findings
+                    if ("sql" in f.get("title", "").lower() or "injection" in f.get("title", "").lower())
+                    and str(f.get("file_path") or "").endswith(".py")
+                ),
+                None
             )
-            if has_sql_vulnerability and "code_flow_trace" not in state.executed_tools:
+            if sql_finding and "code_flow_trace" not in state.executed_tools:
+                trace_file = sql_finding.get("file_path")
                 await cls._record_step(
                     db, state, "adaptive_followup", "running",
                     tool_name="code_flow_trace",
-                    tool_input={"target_file": "app.py"},
+                    tool_input={"target_file": trace_file},
                     reasoning="Intermediate Semgrep scan detected unsafe SQL query construction. Adaptively selecting targeted AST dataflow trace to verify if user-controlled input reaches the query."
                 )
                 flow_result = tool_registry.execute_tool(
                     tool_id="code_flow_trace",
                     workspace_path=canonical_path,
-                    arguments={"target_file": "app.py"},
+                    arguments={"target_file": trace_file},
                     db=db,
                     workspace_id=workspace.id,
                     investigation_id=investigation_id
@@ -254,7 +260,7 @@ class SentinelOrchestrator:
                         category="sast",
                         severity="HIGH",
                         confidence="CONFIRMED",
-                        file_path=raw_f.get("file_path", "app.py"),
+                        file_path=raw_f.get("file_path", trace_file),
                         line_number=raw_f.get("line_number", 18),
                         rule_id=raw_f.get("rule_id", "taint-flow-sql-injection"),
                         description=raw_f.get("description", ""),
@@ -286,7 +292,7 @@ class SentinelOrchestrator:
             await cls._finish_current_step(
                 db, state, "completed",
                 output=interp_result,
-                reasoning="Completed findings synthesis and severity correlation."
+                reasoning=f"Completed findings synthesis and severity correlation ({cls._model_label(interp_result)})."
             )
 
             # Step N+3: ThreatLens Attack Path Reasoning (Capability 2)
@@ -296,6 +302,9 @@ class SentinelOrchestrator:
             )
             attack_context = f"Workspace files: {project_files}. Findings: {state.findings}."
             attack_data = model_gateway.generate_json(ATTACK_PATH_PROMPT, attack_context)
+            if attack_data.get("_source") != "model":
+                # Offline: derive the graph from this workspace's real findings, not canned demo data
+                attack_data = cls._evidence_attack_paths(state.findings)
 
             # Persist attack path in DB with Capability 2 metadata
             for p in attack_data.get("paths", []):
@@ -303,14 +312,14 @@ class SentinelOrchestrator:
                     investigation_id=investigation_id,
                     workspace_id=workspace.id,
                     name=p.get("name", "Attack Vector"),
-                    description=p.get("description", "User-controlled input flows into unescaped SQL query leading to database exposure."),
-                    risk_score=float(p.get("risk_score", 8.5)),
-                    entry_point=p.get("entry_point", "GET /api/user?username=<user_input>"),
-                    vulnerable_component=p.get("vulnerable_component", "app.py:lookup_user()"),
-                    possible_impact=p.get("possible_impact", "Authentication bypass and unauthorized database exfiltration"),
-                    supporting_evidence=p.get("supporting_evidence", "Confirmed by Semgrep (CWE-89) and AST Dataflow Trace at line 18"),
-                    confidence=p.get("confidence", "CONFIRMED"),
-                    recommended_next_check=p.get("recommended_next_check", "Apply parameterized query patch and run verification test suite")
+                    description=p.get("description", ""),
+                    risk_score=float(p.get("risk_score", 5.0)),
+                    entry_point=p.get("entry_point", ""),
+                    vulnerable_component=p.get("vulnerable_component", ""),
+                    possible_impact=p.get("possible_impact", ""),
+                    supporting_evidence=p.get("supporting_evidence", ""),
+                    confidence=p.get("confidence", "INFERRED"),
+                    recommended_next_check=p.get("recommended_next_check", "Apply the proposed patch and run verification")
                 )
                 db.add(ap)
                 db.flush()
@@ -344,7 +353,7 @@ class SentinelOrchestrator:
             await cls._finish_current_step(
                 db, state, "completed",
                 output=attack_data,
-                reasoning=f"Modeled {len(attack_data.get('paths', []))} attack path vector(s) supported by code evidence."
+                reasoning=f"Modeled {len(attack_data.get('paths', []))} attack path vector(s) supported by code evidence ({cls._model_label(attack_data)})."
             )
 
             # Step N+4: Closed-Loop Auto-Fix and Verify (Capability 3)
@@ -352,29 +361,59 @@ class SentinelOrchestrator:
             remediated_finding_title: Optional[str] = None
             verified_count = 0
 
-            target_finding = db.query(Finding).filter(
-                Finding.investigation_id == investigation_id,
-                Finding.category == "sast"
-            ).first()
+            severity_rank = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
+            candidates = sorted(
+                db.query(Finding).filter(Finding.investigation_id == investigation_id).all(),
+                key=lambda f: (severity_rank.get(f.severity, 5), f.category != "sast")
+            )
 
-            if not target_finding:
-                target_finding = db.query(Finding).filter(
-                    Finding.investigation_id == investigation_id
-                ).first()
-
-            if target_finding:
-                # Propose Fix
+            target_finding = None
+            rem_run = None
+            if candidates:
                 await cls._record_step(
                     db, state, "remediation_proposal", "running",
-                    reasoning=f"Generating minimal parameterized fix patch for '{target_finding.title}'."
+                    reasoning="Selecting the highest-risk finding with a safe, verifiable fix and generating a patch."
                 )
-                rem_run = VerificationEngine.propose_remediation(target_finding.id, db)
-                await cls._finish_current_step(
-                    db, state, "completed",
-                    output={"proposed_diff": rem_run.proposed_patch, "summary": rem_run.patch_summary},
-                    reasoning=f"Generated unified patch: {rem_run.patch_summary}"
-                )
+                skipped = []
+                for cand in candidates[:8]:
+                    # Shield pre-check: if the fix target is a policy-protected path (e.g. config.py),
+                    # evaluate_action records the DENY as an AgentFence block and we move to the next
+                    # fixable finding, so the model can never force a write the policy forbids.
+                    if cand.file_path:
+                        abs_target = str((canonical_path / cand.file_path).resolve())
+                        pol = PolicyEngine.evaluate_action(
+                            db=db, workspace_id=workspace.id, tool_name="patch_applicator",
+                            target_path=abs_target, action_type="write",
+                            investigation_id=investigation_id,
+                        )
+                        if pol.decision != "ALLOW":
+                            skipped.append(f"{cand.title}: {pol.reason}")
+                            continue
+                    try:
+                        rem_run = VerificationEngine.propose_remediation(cand.id, db)
+                        target_finding = cand
+                        break
+                    except NoAutomaticFixError as no_fix:
+                        skipped.append(f"{cand.title}: {no_fix}")
+                if rem_run:
+                    await cls._finish_current_step(
+                        db, state, "completed",
+                        output={
+                            "proposed_diff": rem_run.proposed_patch,
+                            "summary": rem_run.patch_summary,
+                            "generated_by": rem_run.generated_by,
+                            "skipped": skipped,
+                        },
+                        reasoning=f"Generated patch for '{target_finding.title}' ({rem_run.generated_by}): {rem_run.patch_summary}"
+                    )
+                else:
+                    await cls._finish_current_step(
+                        db, state, "completed",
+                        output={"skipped": skipped},
+                        reasoning="No finding had a safe automatic fix; manual remediation required."
+                    )
 
+            if target_finding and rem_run:
                 # Apply Patch (safe in workspace)
                 await cls._record_step(
                     db, state, "remediation_apply", "running",
@@ -394,7 +433,7 @@ class SentinelOrchestrator:
                         reasoning=f"Executing test suite and rerunning static security check on {applied_run.target_file}."
                     )
                     ver_run = VerificationEngine.verify_fix(target_finding.id, db, applied_run.id)
-                    ver_status = "completed" if ver_run.status == "verified_fixed" else "failed"
+                    ver_status = "completed" if ver_run.status == "passed" else "failed"
 
                     await cls._finish_current_step(
                         db, state, ver_status,
@@ -405,9 +444,16 @@ class SentinelOrchestrator:
                         },
                         reasoning=f"Verification result: {ver_run.status.upper()}."
                     )
-                    if ver_run.status == "verified_fixed":
+                    if ver_run.status == "passed":
                         verified_count = 1
                         remediated_finding_title = target_finding.title
+                    else:
+                        # A failed fix must not stay in the user's real files
+                        VerificationEngine.rollback_remediation(applied_run.id, db)
+                        await cls._record_step(
+                            db, state, "rollback", "completed",
+                            reasoning=f"Verification failed, so the patch to {applied_run.target_file} was rolled back."
+                        )
 
                 except Exception as patch_err:
                     await cls._finish_current_step(
@@ -415,6 +461,24 @@ class SentinelOrchestrator:
                         output={"error": str(patch_err)},
                         reasoning=f"Policy or application failure: {patch_err}"
                     )
+
+            # Origin tracing: tag each finding with the commit that introduced it (and AI authorship)
+            try:
+                from app.core import origin_tracer
+                for f in db.query(Finding).filter(Finding.investigation_id == investigation_id).all():
+                    if f.origin_commit or not f.file_path:
+                        continue
+                    info = origin_tracer.trace_line(canonical_path, f.file_path, f.line_number)
+                    if info.get("commit"):
+                        f.origin_commit = info["commit"]
+                        f.origin_author = info["author"]
+                        f.origin_date = info["date"]
+                        f.origin_subject = info["subject"]
+                        f.origin_ai_authored = bool(info["ai_authored"])
+                        f.origin_ai_agent = info["ai_agent"]
+                db.commit()
+            except Exception:
+                pass
 
             # Finalize Investigation & Generate Closed-Loop Report
             inv.status = "completed"
@@ -424,7 +488,7 @@ class SentinelOrchestrator:
             inv.summary = (
                 f"Investigation complete. Executed {len(state.executed_tools)} tools with adaptive AST dataflow validation. "
                 f"Discovered {len(state.findings)} security finding(s). "
-                + (f"Closed-loop remediation verified 1 issue ('{remediated_finding_title}': parameterized & test-proven). " if verified_count > 0 else "")
+                + (f"Closed-loop remediation verified 1 issue ('{remediated_finding_title}': re-scanned & test-proven). " if verified_count > 0 else "")
                 + f"Remaining unresolved: {unresolved_count} item(s)."
             )
             workspace.last_analyzed_at = datetime.datetime.now(datetime.timezone.utc)
@@ -468,6 +532,69 @@ class SentinelOrchestrator:
             )
         finally:
             db.close()
+
+    @staticmethod
+    def _model_label(result: Dict[str, Any]) -> str:
+        if result.get("_source") == "model":
+            return f"model: {result.get('_model')}"
+        if result.get("_source") == "evidence":
+            return "built from scanner evidence"
+        return "deterministic fallback, no model configured"
+
+    @staticmethod
+    def _evidence_attack_paths(findings: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Build attack-path graphs strictly from scanner evidence: one path per affected file."""
+        severity_score = {"CRITICAL": 9.5, "HIGH": 8.0, "MEDIUM": 5.5, "LOW": 3.0, "INFO": 1.0}
+        node_type_for = {"secret": "secret", "dependency": "dependency"}
+        by_file: Dict[str, List[Dict[str, Any]]] = {}
+        for f in findings:
+            by_file.setdefault(f.get("file_path") or "workspace", []).append(f)
+
+        ranked = sorted(
+            by_file.items(),
+            key=lambda item: -max(severity_score.get(f.get("severity"), 1.0) for f in item[1])
+        )
+        secrets = [f for f in findings if f.get("category") == "secret"]
+
+        paths = []
+        for file_path, file_findings in ranked[:3]:
+            nodes = [{"id": "file", "type": "source_file", "label": file_path}]
+            edges = []
+            for idx, f in enumerate(file_findings[:6]):
+                node_id = f"v{idx}"
+                nodes.append({
+                    "id": node_id,
+                    "type": node_type_for.get(f.get("category"), "vulnerability"),
+                    "label": f.get("title", "Finding")[:80],
+                })
+                edges.append({
+                    "source_id": "file",
+                    "target_id": node_id,
+                    "relation_type": "exposes",
+                    "is_inferred": False,
+                    "evidence": f"{f.get('rule_id', 'scanner')} at line {f.get('line_number')}",
+                })
+            if secrets and any(f.get("category") == "sast" for f in file_findings):
+                nodes.append({"id": "secret", "type": "secret", "label": f"Credential in {secrets[0].get('file_path')}"})
+                edges.append({
+                    "source_id": "v0",
+                    "target_id": "secret",
+                    "relation_type": "potentially_reaches",
+                    "is_inferred": True,
+                    "evidence": "Inferred: code flaw in the same workspace as an exposed credential",
+                })
+            top = max(file_findings, key=lambda f: severity_score.get(f.get("severity"), 1.0))
+            paths.append({
+                "name": f"{top.get('title', 'Finding')} in {file_path}",
+                "description": f"{len(file_findings)} scanner-confirmed issue(s) in {file_path}.",
+                "risk_score": severity_score.get(top.get("severity"), 1.0),
+                "vulnerable_component": file_path,
+                "supporting_evidence": ", ".join(sorted({str(f.get("rule_id")) for f in file_findings}))[:500],
+                "confidence": "CONFIRMED",
+                "nodes": nodes,
+                "edges": edges,
+            })
+        return {"paths": paths, "_source": "evidence", "_model": "scanner-evidence"}
 
     @classmethod
     async def _record_step(

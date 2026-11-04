@@ -45,7 +45,7 @@ async def start_investigation(
         details={"workspace_name": workspace.display_name}
     )
 
-    # Launch autonomous LangGraph orchestrator as background task
+    # Launch autonomous orchestrator as background task
     background_tasks.add_task(SentinelOrchestrator.run_investigation_async, inv.id)
 
     return inv

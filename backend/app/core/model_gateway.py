@@ -59,9 +59,7 @@ class ModelGateway:
     def generate_json(self, system_prompt: str, user_content: str, task_type: Optional[str] = None) -> Dict[str, Any]:
         """
         Generates a structured JSON response from the model.
-        Automatically routes to:
-          - Demo Provider (Groq Llama models) in 'demo' mode
-          - Production Provider (Meta Model API: Muse Spark, Muse Wonder, Muse Code) in 'prod' mode
+        Routes each task to its Meta Model API model (Muse Spark / Muse Wonder).
         Redacts sensitive context prior to calling remote APIs.
         Falls back to intelligent local heuristics if remote API is unconfigured or fails.
         """
@@ -73,28 +71,44 @@ class ModelGateway:
         client = self._get_client()
 
         if self.is_configured() and client is not None:
-            print(f"[ModelGateway] [{settings.active_env.upper()} | Provider: {settings.active_provider.upper()}] Invoking {model_name} for task '{resolved_task}'...")
+            print(f"[ModelGateway] [Provider: {settings.active_provider.upper()}] Invoking {model_name} for task '{resolved_task}'...")
+            use_json_mode = True
             for attempt in range(self.max_retries + 1):
                 try:
-                    response = client.chat.completions.create(
-                        model=model_name,
-                        messages=[
+                    request_args = {
+                        "model": model_name,
+                        "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": clean_user_content}
                         ],
-                        response_format={"type": "json_object"},
-                        temperature=0.1
-                    )
+                        "temperature": 0.1,
+                    }
+                    # Not every OpenAI-compatible provider supports JSON mode; the prompts demand JSON anyway
+                    if use_json_mode:
+                        request_args["response_format"] = {"type": "json_object"}
+                    response = client.chat.completions.create(**request_args)
                     raw_text = response.choices[0].message.content or "{}"
-                    return self._clean_and_parse_json(raw_text)
+                    parsed = self._clean_and_parse_json(raw_text)
+                    if "error" in parsed and "raw" in parsed:
+                        raise ValueError(parsed["error"])
+                    parsed["_source"] = "model"
+                    parsed["_model"] = model_name
+                    parsed["_provider"] = settings.active_provider
+                    return parsed
                 except Exception as e:
+                    if "response_format" in str(e) or "json_object" in str(e):
+                        use_json_mode = False
                     if attempt == self.max_retries:
                         print(f"[ModelGateway] [{settings.active_provider.upper()}] Model call failed ({e}). Falling back to deterministic engine.")
                         break
                     time.sleep(1)
 
         # Deterministic Fallback Engine (Guarantees reliable operation even offline or zero-key)
-        return self._fallback_reasoning(system_prompt, clean_user_content)
+        result = self._fallback_reasoning(system_prompt, clean_user_content)
+        result["_source"] = "fallback"
+        result["_model"] = "deterministic-fallback"
+        result["_provider"] = "local"
+        return result
 
 
     def _clean_and_parse_json(self, raw_text: str) -> Dict[str, Any]:

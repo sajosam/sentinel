@@ -6,6 +6,7 @@ import {
   AttackPath,
   Remediation,
   Verification,
+  AttackResult,
   AuditEvent,
   ShieldStatus,
   SystemHealth
@@ -14,6 +15,26 @@ import {
 const API_BASE = '/api';
 
 export const api = {
+  // Attack Lab
+  attackLabStatus: async (): Promise<{ docker_available: boolean }> => {
+    const res = await fetch(`${API_BASE}/attack-lab/status`);
+    return res.json();
+  },
+  runAttackLab: async (workspaceId: string): Promise<any> => {
+    const res = await fetch(`${API_BASE}/attack-lab/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workspace_id: workspaceId })
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Failed to launch attack lab');
+    return res.json();
+  },
+  listAttackResults: async (workspaceId: string): Promise<AttackResult[]> => {
+    const res = await fetch(`${API_BASE}/attack-lab?workspace_id=${workspaceId}`);
+    return res.json();
+  },
+  attackReportUrl: (workspaceId: string): string => `${API_BASE}/attack-lab/report?workspace_id=${workspaceId}`,
+
   // Health
   getHealth: async (): Promise<SystemHealth> => {
     const res = await fetch(`${API_BASE}/health`);
@@ -32,6 +53,15 @@ export const api = {
       body: JSON.stringify(data)
     });
     if (!res.ok) throw new Error((await res.json()).detail || 'Failed to create workspace');
+    return res.json();
+  },
+  cloneWorkspace: async (repoUrl: string): Promise<Workspace> => {
+    const res = await fetch(`${API_BASE}/workspaces/clone`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repo_url: repoUrl })
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Failed to clone repository');
     return res.json();
   },
   getWorkspace: async (id: string): Promise<Workspace> => {

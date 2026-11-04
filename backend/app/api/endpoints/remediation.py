@@ -25,8 +25,10 @@ def apply_remediation(payload: RemediationApplyRequest, db: Session = Depends(ge
         return VerificationEngine.apply_remediation(payload.remediation_id, db)
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
-    except (ValueError, FileNotFoundError) as e:
+    except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

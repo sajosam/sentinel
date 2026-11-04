@@ -9,6 +9,7 @@ from app.api.endpoints import (
     remediation,
     audit,
     tools,
+    attack_lab,
     health,
     demo,
     system,
@@ -27,4 +28,5 @@ api_router.include_router(attack_paths.router)
 api_router.include_router(remediation.router)
 api_router.include_router(audit.router)
 api_router.include_router(tools.router)
+api_router.include_router(attack_lab.router)
 api_router.include_router(demo.router)

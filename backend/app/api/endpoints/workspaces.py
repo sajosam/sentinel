@@ -1,12 +1,22 @@
 import os
+import re
+import shutil
+import subprocess
 from pathlib import Path
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db.models import Workspace, Policy
-from app.schemas.workspace import WorkspaceCreate, WorkspaceUpdate, WorkspaceResponse
+from app.schemas.workspace import WorkspaceCreate, WorkspaceUpdate, WorkspaceResponse, WorkspaceCloneRequest
 from app.core.audit_service import AuditService
+from app.core.verification_engine import NO_CODE_EXECUTION
+from app.config import settings
+
+PUBLIC_REPO_URL = re.compile(
+    r"^https://(?P<host>github\.com|gitlab\.com|bitbucket\.org)/"
+    r"(?P<owner>[A-Za-z0-9][A-Za-z0-9_.-]{0,99})/(?P<repo>[A-Za-z0-9_.-]{1,100}?)(?:\.git)?/?$"
+)
 
 router = APIRouter(prefix="/workspaces", tags=["Workspaces"])
 
@@ -24,6 +34,54 @@ def create_workspace(payload: WorkspaceCreate, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
+    return _register_workspace(db, payload, canonical_path)
+
+
+@router.post("/clone", response_model=WorkspaceResponse, status_code=status.HTTP_201_CREATED)
+def clone_workspace(payload: WorkspaceCloneRequest, db: Session = Depends(get_db)):
+    """Shallow-clone a public Git repository and register it as an untrusted workspace."""
+    repo_url = payload.repo_url.strip()
+    match = PUBLIC_REPO_URL.match(repo_url)
+    if not match:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only public HTTPS repositories on github.com, gitlab.com or bitbucket.org are supported "
+                   "(e.g. https://github.com/owner/repo)."
+        )
+    owner, repo = match.group("owner"), match.group("repo")
+
+    clone_root = Path(settings.CLONE_ROOT).expanduser() if settings.CLONE_ROOT else Path.home() / ".sentinelos" / "repos"
+    clone_root.mkdir(parents=True, exist_ok=True)
+    dest = (clone_root / f"{owner}__{repo}").resolve()
+
+    if not (dest / ".git").exists():
+        env = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_LFS_SKIP_SMUDGE": "1"}
+        try:
+            res = subprocess.run(
+                # Partial clone: full commit history (needed for git-blame origin tracing) without old file blobs
+                ["git", "clone", "--filter=blob:none", "--no-tags", "--", f"https://{match.group('host')}/{owner}/{repo}.git", str(dest)],
+                capture_output=True, text=True, timeout=180, env=env
+            )
+        except subprocess.TimeoutExpired:
+            shutil.rmtree(dest, ignore_errors=True)
+            raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT, detail="git clone timed out")
+        if res.returncode != 0:
+            shutil.rmtree(dest, ignore_errors=True)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"git clone failed: {res.stderr.strip()[-300:]}"
+            )
+
+    create_payload = WorkspaceCreate(
+        display_name=payload.display_name or f"{owner}/{repo}",
+        canonical_path=str(dest),
+        # Never execute code from a cloned third-party repository (e.g. its test suite)
+        enabled_checks=["secrets", "sast", "dependencies", "prompt_shield", NO_CODE_EXECUTION],
+    )
+    return _register_workspace(db, create_payload, dest, source=f"git:{repo_url}")
+
+
+def _register_workspace(db: Session, payload: WorkspaceCreate, canonical_path: Path, source: str = "local") -> Workspace:
     # Check for existing workspace with same canonical path
     existing = db.query(Workspace).filter(Workspace.canonical_path == str(canonical_path)).first()
     if existing:
@@ -73,7 +131,7 @@ def create_workspace(payload: WorkspaceCreate, db: Session = Depends(get_db)):
         action="register_workspace",
         decision="ALLOW",
         reason=f"Registered workspace '{workspace.display_name}' at {canonical_path}",
-        details={"project_type": project_type}
+        details={"project_type": project_type, "source": source}
     )
 
     return workspace

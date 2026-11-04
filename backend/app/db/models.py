@@ -138,6 +138,13 @@ class Finding(Base):
     remediation = Column(Text, default="")
     verification_status = Column(String(32), default="unverified")  # unverified, fix_proposed, verified_fixed, unresolved
     is_suppressed = Column(Boolean, default=False)
+    # Origin tracing: which commit introduced this vulnerable line, and whether an AI agent wrote it
+    origin_commit = Column(String(40), nullable=True)
+    origin_author = Column(String(255), nullable=True)
+    origin_date = Column(String(32), nullable=True)
+    origin_subject = Column(Text, nullable=True)
+    origin_ai_authored = Column(Boolean, default=False)
+    origin_ai_agent = Column(String(128), nullable=True)
     created_at = Column(DateTime, default=utc_now)
 
     workspace = relationship("Workspace", back_populates="findings")
@@ -145,6 +152,24 @@ class Finding(Base):
     evidence_items = relationship("Evidence", back_populates="finding", cascade="all, delete-orphan")
     remediations = relationship("RemediationRun", back_populates="finding", cascade="all, delete-orphan")
     verifications = relationship("VerificationRun", back_populates="finding", cascade="all, delete-orphan")
+
+
+class AttackResult(Base):
+    """One attempted exploit fired at the sandboxed copy of the app, with its real request/response."""
+    __tablename__ = "attack_results"
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    investigation_id = Column(String(36), ForeignKey("investigations.id", ondelete="SET NULL"), nullable=True)
+    workspace_id = Column(String(36), ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False)
+    finding_id = Column(String(36), ForeignKey("findings.id", ondelete="SET NULL"), nullable=True)
+    phase = Column(String(16), default="pre_fix")   # pre_fix | post_fix
+    exploit_name = Column(String(255), nullable=False)
+    category = Column(String(64), default="")        # sast | prompt_injection | secret
+    verdict = Column(String(16), default="SURVIVED")  # BREACHED | SURVIVED | NOT_REACHABLE | ERROR
+    request_detail = Column(Text, default="")        # method, path, payload (redacted)
+    response_detail = Column(Text, default="")       # status + evidence snippet (redacted)
+    reason = Column(Text, default="")                # why this verdict
+    created_at = Column(DateTime, default=utc_now)
 
 
 class Evidence(Base):
@@ -220,6 +245,9 @@ class RemediationRun(Base):
     target_file = Column(String(1024), nullable=False)
     status = Column(String(32), default="proposed")  # proposed, applied, reverted, rejected
     backup_file_content = Column(Text, nullable=True)
+    patched_content = Column(Text, nullable=True)  # full post-fix file content computed at proposal time
+    generated_by = Column(String(128), default="")  # "model:<name>" or "rule-based"
+    baseline_test_failures = Column(JSON, default=list)  # failing tests before the patch was applied
     created_at = Column(DateTime, default=utc_now)
     applied_at = Column(DateTime, nullable=True)
 
@@ -265,7 +293,7 @@ class ModelUsage(Base):
     id = Column(String(36), primary_key=True, default=generate_uuid)
     investigation_id = Column(String(36), ForeignKey("investigations.id", ondelete="SET NULL"), nullable=True)
     provider = Column(String(64), default="meta")
-    model_name = Column(String(128), default="llama-3.3-70b-versatile")
+    model_name = Column(String(128), default="muse-spark-1.3")
     prompt_tokens = Column(Integer, default=0)
     completion_tokens = Column(Integer, default=0)
     latency_ms = Column(Integer, default=0)

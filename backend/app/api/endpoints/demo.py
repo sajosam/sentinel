@@ -7,23 +7,9 @@ from app.db.session import get_db
 from app.db.models import Workspace, Policy
 from app.core.policy_engine import PolicyEngine
 from app.core.audit_service import AuditService
+from app.config import get_demo_lab_dir
 
 router = APIRouter(prefix="/demo", tags=["SentinelOS Security Lab Demo"])
-
-
-def get_demo_lab_dir() -> Path:
-    if os.environ.get("DEMO_LAB_DIR"):
-        return Path(os.environ["DEMO_LAB_DIR"]).resolve()
-    for candidate in [
-        Path.cwd() / "demo_lab",
-        Path(__file__).resolve().parent.parent.parent.parent.parent / "demo_lab",
-        Path(__file__).resolve().parent.parent.parent / "demo_lab",
-        Path("/app/demo_lab"),
-    ]:
-        if candidate.exists():
-            return candidate.resolve()
-    return (Path(__file__).resolve().parent.parent.parent.parent.parent / "demo_lab").resolve()
-
 
 
 @router.post("/setup")
@@ -46,7 +32,7 @@ def setup_demo_workspace(db: Session = Depends(get_db)):
             project_type="python/fastapi",
             protected_paths=[".env", "config.py", "protected_admin_keys.json"],
             excluded_paths=[".git", ".venv", "__pycache__"],
-            enabled_checks=["secrets", "sast", "dependencies", "prompt_shield"]
+            enabled_checks=["secrets", "sast", "dependencies", "prompt_shield", "tests"]
         )
         db.add(workspace)
         db.commit()

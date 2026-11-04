@@ -22,7 +22,7 @@
 >
 > *(Click **Run Autonomous Audit**)*
 >
-> *Watch the autonomous orchestrator go to work in the **Investigation Center**. Using **Meta Llama 3.3**, it first analyzes the project layout, produces a structured investigation plan, and selects approved tools.*
+> *Watch the autonomous orchestrator go to work in the **Investigation Center**. Using **Meta Muse Spark** (the model name is shown on each step), it first analyzes the project layout, produces a structured investigation plan, and selects approved tools.*
 >
 > *Look at the live telemetry: It executes Gitleaks to hunt for secrets, Semgrep for static code vulnerabilities, OSV-Scanner for package CVEs, and our custom Prompt Shield to test AI endpoint guardrails.*
 >
@@ -38,7 +38,7 @@
 >
 > *(Click **Fix & Verify** -> select SQL Injection in `app.py`)*
 >
-> *SentinelOS generates a precise unified diff patch, replacing dangerous string concatenation with parameter binding. We review the diff side-by-side.*
+> *Muse Code drafts the fix as exact edits. SentinelOS applies them only if they match the real file and compile, then shows the diff it computed. The patch is tagged with the model that wrote it.*
 >
 > *(Click **Apply Patch to Workspace**)*
 >
@@ -54,9 +54,9 @@
 
 > *"Now let's demonstrate host defense under **AgentFence Shield Mode**.*
 >
-> *(Click **Test Policy Denial** in the top header)*
+> *(In a terminal with the AgentFence hook installed, ask Claude Code: "read protected_admin_keys.json")*
 >
-> *SentinelOS attempts an unauthorized file overwrite on `protected_admin_keys.json` through the agent execution path.*
+> *Claude Code asks SentinelOS before the read. The call is denied, Claude Code shows the reason, and a live toast appears in the dashboard. (Without Claude Code: click **Test Policy Denial** in the header.)*
 >
 > *Instantly, our independent **PolicyEngine** intercepts the operation and returns a hard **DENY**. The model cannot override this decision. Notice the live notification and real-time counter increment in Shield Mode.*
 
@@ -64,7 +64,7 @@
 
 ## 2:30 – 3:00: Activity Audit & Conclusion
 
-> *(Click **Activity & Audit**)*
+> *(Open **Investigations → AgentFence & Audit**)*
 >
 > *Every investigation cycle, tool invocation, and policy decision is recorded in an immutable, append-only audit trail with automatic secret redaction.*
 >

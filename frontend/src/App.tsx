@@ -6,7 +6,8 @@ import {
   AttackPath,
   AuditEvent,
   ShieldStatus,
-  SystemHealth
+  SystemHealth,
+  AttackResult
 } from './types';
 import { api } from './api/client';
 import { Header } from './components/Header';
@@ -15,6 +16,7 @@ import { OnboardingModal } from './components/OnboardingModal';
 import { Overview } from './pages/Overview';
 import { InvestigationCenter, InvestigationSubTab } from './pages/InvestigationCenter';
 import { Findings } from './pages/Findings';
+import { AttackLab } from './pages/AttackLab';
 import { Settings } from './pages/Settings';
 import { ShieldAlert, X } from 'lucide-react';
 
@@ -30,6 +32,8 @@ export const App: React.FC = () => {
   const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
   const [shieldStatus, setShieldStatus] = useState<ShieldStatus | null>(null);
   const [health, setHealth] = useState<SystemHealth | null>(null);
+  const [attackResults, setAttackResults] = useState<AttackResult[]>([]);
+  const [dockerAvailable, setDockerAvailable] = useState<boolean | null>(null);
 
   const [policyToast, setPolicyToast] = useState<any | null>(null);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState<boolean>(false);
@@ -43,6 +47,7 @@ export const App: React.FC = () => {
     try {
       const h = await api.getHealth();
       setHealth(h);
+      try { setDockerAvailable((await api.attackLabStatus()).docker_available); } catch { setDockerAvailable(null); }
 
       const wsList = await api.listWorkspaces();
       setWorkspaces(wsList);
@@ -76,7 +81,13 @@ export const App: React.FC = () => {
     eventSource.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data);
-        if (
+        if (payload.event_type === 'agent_fence_decision') {
+          // A real AI agent (Claude Code hook) was just blocked by AgentFence
+          setPolicyToast({ reason: payload.data.reason, target: payload.data.target_path, agent: 'Claude Code' });
+          refreshData();
+        } else if (payload.event_type === 'attack_finished') {
+          refreshData();
+        } else if (
           payload.event_type === 'step_completed' ||
           payload.event_type === 'finished' ||
           payload.event_type === 'finding_discovered'
@@ -105,18 +116,20 @@ export const App: React.FC = () => {
   const refreshData = async () => {
     if (!currentWorkspace) return;
     try {
-      const [invs, fnds, paths, audits, shield] = await Promise.all([
+      const [invs, fnds, paths, audits, shield, attacks] = await Promise.all([
         api.listInvestigations(currentWorkspace.id),
         api.listFindings({ workspace_id: currentWorkspace.id }),
         api.listAttackPaths(currentWorkspace.id),
         api.listAudit(currentWorkspace.id, 50),
         api.getShieldStatus(currentWorkspace.id),
+        api.listAttackResults(currentWorkspace.id),
       ]);
       setInvestigations(invs);
       setFindings(fnds);
       setAttackPaths(paths);
       setAuditEvents(audits);
       setShieldStatus(shield);
+      setAttackResults(attacks);
     } catch (e) {
       console.error('Failed to refresh data:', e);
     }
@@ -200,7 +213,7 @@ export const App: React.FC = () => {
     : false;
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#0B1020] text-[#E8ECF5] overflow-hidden font-sans antialiased">
+    <div className="flex flex-col h-screen w-screen bg-[#0A0E14] text-[#E6EBF2] overflow-hidden font-sans antialiased">
       {/* 1. Compact Header */}
       <Header
         workspaces={workspaces}
@@ -218,11 +231,12 @@ export const App: React.FC = () => {
         <Sidebar
           currentTab={currentTab}
           onSelectTab={(tab) => setCurrentTab(tab)}
-          modelLabel={health?.model_gateway?.is_prod ? 'Meta Muse (Prod)' : 'Meta AI Ready'}
+          modelLabel={health?.model_gateway?.configured ? health.model_gateway.model_name : 'Offline fallback'}
+          modelConfigured={!!health?.model_gateway?.configured}
         />
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-[#0B1020]">
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-[#0A0E14]">
           {/* Active Tab View */}
           {currentTab === 'overview' && (
             <Overview
@@ -253,6 +267,18 @@ export const App: React.FC = () => {
               initialSubTab={investigationSubTab}
               selectedFindingId={selectedFindingId}
               onTriggerPolicyBlock={handleTriggerPolicyBlock}
+              health={health}
+              shieldStatus={shieldStatus}
+            />
+          )}
+
+          {currentTab === 'attacklab' && (
+            <AttackLab
+              currentWorkspace={currentWorkspace}
+              findings={findings}
+              attackResults={attackResults}
+              dockerAvailable={dockerAvailable}
+              onRefresh={refreshData}
             />
           )}
 
@@ -271,26 +297,26 @@ export const App: React.FC = () => {
 
       {/* Temporary Toast Notification for Policy Denial Events */}
       {policyToast && (
-        <div className="fixed bottom-5 right-5 z-50 p-4 rounded-xl border border-rose-500/30 bg-[#141B2D] shadow-2xl text-[#E8ECF5] max-w-sm space-y-2 animate-fadeIn">
+        <div className="fixed bottom-5 right-5 z-50 p-4 rounded-xl border border-rose-500/30 bg-[#141A24] shadow-2xl text-[#E6EBF2] max-w-sm space-y-2 animate-fadeIn">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
               <span className="text-xs font-semibold text-rose-300">
-                Action Blocked: Policy Denial
+                {policyToast.agent ? `${policyToast.agent} blocked by AgentFence` : 'Action Blocked: Policy Denial'}
               </span>
             </div>
             <button
               type="button"
               onClick={() => setPolicyToast(null)}
-              className="text-[#9AA6BF] hover:text-[#E8ECF5] p-0.5 rounded transition-colors"
+              className="text-[#8A97AC] hover:text-[#E6EBF2] p-0.5 rounded transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>
-          <p className="text-xs text-[#9AA6BF] leading-relaxed">
+          <p className="text-xs text-[#8A97AC] leading-relaxed">
             {policyToast.reason}
           </p>
-          <div className="text-[11px] text-[#8B7CFF] font-mono truncate bg-[#0B1020] p-1.5 rounded border border-[#283149]">
+          <div className="text-[11px] text-[#3B82F6] font-mono truncate bg-[#0A0E14] p-1.5 rounded border border-[#232B38]">
             Target: {policyToast.target}
           </div>
         </div>

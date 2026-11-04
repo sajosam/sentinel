@@ -3,190 +3,204 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![LangGraph](https://img.shields.io/badge/Orchestrator-LangGraph-FF6F00)](https://langchain.com)
-[![Meta Llama](https://img.shields.io/badge/Model-Meta_Llama_3.3-0467DF?logo=meta&logoColor=white)](https://ai.meta.com/llama)
+[![Meta Models](https://img.shields.io/badge/Models-Meta_Muse-0467DF?logo=meta&logoColor=white)](https://ai.meta.com)
 [![React 18](https://img.shields.io/badge/Frontend-React_18_%2B_Vite-61DAFB?logo=react&logoColor=black)](https://react.dev)
 
 > **Build with AI. Stay in control.**
 
-**SentinelOS** is a local-first, autonomous AI security platform that helps software engineers build with AI coding tools safely. Operating as an autonomous security engineer alongside developers, SentinelOS coordinates real host security scanners, independently enforces workspace policies, models exploit attack paths, generates verified remediations, and maintains an immutable audit trail.
+**SentinelOS** is a local-first security engineer for developers who ship code with AI coding agents. It scans a project with real security tools, uses Meta's models to plan the investigation, connect findings into attack paths and draft fixes, then **proves** each fix by re-scanning and re-running tests. Its AgentFence policy engine plugs into Claude Code and blocks the agent from reading or writing protected files such as `.env`.
 
 ---
 
 ## The Core Principle
 
 ```
-The LLM reasons. 
-The orchestrator coordinates. 
-Security tools gather evidence. 
-The policy engine controls actions. 
+The LLM reasons.
+The orchestrator coordinates.
+Security tools gather evidence.
+The policy engine controls actions.
 The verification engine checks results.
 ```
 
 *An LLM is never trusted alone to enforce security or declare its own fixes successful.*
 
+Concretely:
+- The model **plans** which scanners to run, but every tool call passes the deterministic `PolicyEngine` first.
+- The model **drafts** a patch as exact search/replace edits. SentinelOS applies them to the real file only if every edit matches exactly once and the result compiles. The diff you see is computed by SentinelOS, not copied from model output.
+- A fix is **VERIFIED** only when the original scanner no longer reports the finding and the test suite shows no new failures compared to a pre-patch baseline.
+- Every UI label shows which model actually served a task, or says "offline fallback" when no key is configured.
+
 ---
 
-## Architecture Overview
+## Architecture
 
 ```mermaid
 graph TD
     subgraph Host Machine
-        UI[Desktop UI - React + Vite + Tailwind CSS]
-        
-        subgraph SentinelOS Core Security Engine
-            API[FastAPI Local Security Service :8000]
-            DB[(SQLite / SQLAlchemy Storage)]
-            AF[AgentFence Policy Engine]
+        UI[Desktop UI - React + Vite + Tailwind]
+        CC[Claude Code] -->|PreToolUse hook| HOOK[scripts/agentfence_hook.py]
+
+        subgraph SentinelOS Service :8000
+            API[FastAPI]
+            DB[(SQLite / SQLAlchemy)]
+            PE[PolicyEngine + AgentFence]
             AL[Audit Service with Secret Redaction]
-            BUS[SSE Live Event Stream]
-            
-            subgraph Sentinel Intelligence Orchestrator
-                LG[LangGraph Multi-Step Workflow]
-                MG[Model Gateway - Meta Llama 3.3]
-                TR[Tool Registry & Execution Gate]
-                VE[Verification Engine]
-            end
-            
-            subgraph Real Security Scanners
-                GL[Gitleaks Secret Scanner CLI]
-                SG[Semgrep SAST Engine CLI]
-                OSV[OSV-Scanner Dependency CLI]
-                PS[Prompt Shield AI Tester]
-                TRUN[Native Test Runner]
+            BUS[SSE Event Stream]
+            ORC[Orchestrator - sequential state machine]
+            MG[Model Gateway - Meta Model API / OpenAI-compatible]
+            TR[Tool Registry - policy-gated]
+            VE[Verification Engine]
+            subgraph Scanners
+                GL[Gitleaks]
+                SG[Semgrep]
+                OSV[OSV-Scanner]
+                PS[Prompt Shield]
+                TRUN[pytest runner]
             end
         end
-        
-        subgraph SentinelOS Security Lab Demo Target
-            LAB[Vulnerable FastAPI Service :8001]
-            CONF[config.py - Synthetic Key]
-            APP[app.py - SQLi & Prompt Test]
-            REQ[requirements.txt - Vulnerable Dep]
-            PROT[protected_admin_keys.json - Protected Root]
-        end
+
+        LAB[Security Lab demo target :8001]
+        REPO[Your folder or a cloned public repo]
     end
 
-    UI <-->|REST + SSE Live Events| API
-    API --> DB
-    API --> AF
-    API --> AL
-    API --> BUS
-    API --> LG
-    LG --> MG
-    LG --> TR
-    TR --> AF
-    TR --> GL
-    TR --> SG
-    TR --> OSV
-    TR --> PS
-    TR --> TRUN
+    UI <-->|REST + SSE| API
+    HOOK -->|POST /api/shield/hooks/claude-code| PE
+    API --> ORC
+    ORC --> MG
+    ORC --> TR
+    TR --> PE
+    TR --> GL & SG & OSV & PS & TRUN
+    VE --> MG
     VE --> TR
-    AF -->|Deterministic Block| PROT
-    GL --> CONF
-    SG --> APP
-    OSV --> REQ
-    PS --> APP
+    VE --> PE
+    PE --> AL
+    API --> BUS
 ```
 
----
+### Which Meta model does what
 
-## 10 Core Product Modules
+Every task routes to the Meta Model API. Edit the model IDs in `.env`.
 
-1. **Workspace Manager**: Canonical host path verification, directory traversal protection (`..`, `/etc`, `~`), and protected file boundary definitions.
-2. **AgentFence (Shield Mode)**: Independent deterministic policy engine evaluating every tool execution, blocking unauthorized writes to sensitive project assets.
-3. **SecretVault**: Automated credential discovery using Gitleaks and entropy analysis with zero-leak redaction across logs, model prompts, and database records.
-4. **Sentinel Intelligence**: Stateful LangGraph autonomous orchestrator that reasons over workspace layout, creates structured plans, selects approved tools, and interprets evidence.
-5. **Supply Chain Guard**: Manifest inspector detecting vulnerable dependencies using OSV-Scanner against known CVEs.
-6. **ThreatLens**: Interactive attack path graph connecting endpoints, source files, vulnerabilities, and databases, distinguishing confirmed evidence from inferred reachability.
-7. **AttackLab**: Controlled local security test environment for non-destructive validation.
-8. **Prompt Shield**: AI application security tester probing endpoints against prompt injection, hidden instruction extraction, and credential disclosure attempts.
-9. **Fix & Verify Engine**: Generates minimal unified diff patches, safely applies them within workspace boundaries, reruns security scanners and pytest suites to objectively confirm resolution, with one-click rollback support.
-10. **Audit & Control Center**: Centralized, immutable event history tracking every investigation cycle, tool run, and policy decision.
+| Task | Meta model |
+| :--- | :--- |
+| Investigation planning, discovery | `muse-spark-1.3` |
+| Finding interpretation, ThreatLens attack paths, exploit planning | `muse-wonder-1.0` |
+| Patch drafting (Fix & Verify, Attack Lab fixes) | `muse-wonder-1.0` |
+
+With no API key, a deterministic offline engine takes over so the app and tests still run. Planning uses a fixed scanner plan, attack paths are built strictly from scanner evidence, and fixes come from a small rule-based engine (parameterized SQL for f-string queries, `os.getenv` for hardcoded secrets, version pins for known-vulnerable dependencies). The UI labels these results as offline fallback, not as model output.
 
 ---
 
-## Quick Start (Installation & Execution)
+## The Attack Lab — prove it, don't just report it
+
+Most scanners hand you a list. SentinelOS takes any repo and **actually breaks into a disposable copy of it**:
+
+1. **Clone with history.** Paste a public repo URL; SentinelOS clones it (full history for origin tracing).
+2. **Scan.** Secrets, SAST, dependencies, prompt-injection.
+3. **Sandbox.** It copies the app into a locked-down Docker container (no host files, dropped privileges, CPU/RAM/PID limits, loopback-only port, auto-destroyed). Your real files are never touched.
+4. **Attack.** It reads the app's live routes, Muse Wonder plans exploits, and SentinelOS fires them **only at the sandbox**. Each finding gets a verdict from the real HTTP response: 🔴 BREACHED, 🟢 SURVIVED, or NOT REACHABLE.
+5. **Origin.** `git blame` shows which commit introduced each hole, who wrote it, and whether an **AI agent co-authored it**.
+6. **Fix & re-attack.** Muse Wonder fixes the breached findings in the copy, SentinelOS rebuilds and fires the same exploits again, and shows BREACHED → SURVIVED.
+7. **Report.** A one-click HTML report: scorecard (breached → closed, how many from AI-authored commits) and per-finding proof (request/response before and after).
+
+Requires Docker. Only Python FastAPI/Flask apps are auto-attacked today; other repos still get scan, origin, fix and report.
+
+**Try it live:** paste [`https://github.com/sajosam/sentinelos-demo-lab`](https://github.com/sajosam/sentinelos-demo-lab) into *Clone & Scan*. It is an intentionally vulnerable FastAPI app (SQL injection, hardcoded secret, prompt injection) that the Attack Lab breaches, fixes, and re-attacks end to end.
+
+## Core Modules
+
+1. **Workspaces**: register a local folder, the bundled Security Lab, or **clone a public GitHub/GitLab/Bitbucket repo** by URL. Cloned repos are marked untrusted, so their code (including tests) is never executed.
+2. **AgentFence**: deterministic `ALLOW / DENY / REQUIRE_APPROVAL` decisions on workspace boundaries and protected paths (`.env`, `*.key`, `id_rsa`, plus per-workspace rules). It serves SentinelOS's own tools and **Claude Code via a PreToolUse hook**.
+3. **Secret scanning**: Gitleaks plus a pattern-based fallback. Secrets are redacted from logs, model prompts, SSE events and the database.
+4. **Investigation orchestrator**: discovery, model-generated plan, policy-gated scanner runs, an adaptive AST dataflow trace when SQL injection is suspected, interpretation, attack-path modeling, then an automatic fix-and-verify attempt on the highest-risk fixable finding.
+5. **Supply Chain Guard**: OSV-Scanner plus a manifest inspector for known-vulnerable pins.
+6. **ThreatLens**: attack-path graphs. Every edge is labeled CONFIRMED (backed by scanner evidence) or INFERRED.
+7. **Prompt Shield**: injection, instruction-leak and secret-extraction probes against an AI endpoint.
+8. **Fix & Verify**: model-drafted patch, exact-match application, syntax check, drift check, baseline tests, re-scan, regression-aware verdict, one-click rollback.
+9. **Audit ledger**: append-only record of every tool run, policy decision, patch and verification.
+
+---
+
+## Quick Start
 
 ### Prerequisites
 
-- **Python**: 3.12 (or 3.11+)
-- **Node.js**: v18+ & npm
-- **Host Security Scanners** (Optional but recommended; native fallbacks included):
+- Python 3.11+ (3.12 recommended), Node.js 18+, `git`
+- Optional but recommended host scanners (pure-Python fallbacks are built in):
   ```bash
   brew install gitleaks semgrep osv-scanner
   ```
 
-### 1. Setup & Installation
-
-Clone repository and run automated setup:
+### 1. Setup
 
 ```bash
-git clone https://github.com/sential/sential.git
-cd sential
-
-# Run automated environment setup
 ./scripts/setup.sh
-```
-
-### 2. Configure Environment
-
-Copy `.env.example` to `.env`:
-
-```bash
 cp .env.example .env
 ```
 
-To enable Meta's supported Llama model, configure your API credentials:
+### 2. Configure Meta models
+
 ```env
-MODEL_PROVIDER=meta
-MODEL_BASE_URL=https://api.groq.com/openai/v1
-MODEL_API_KEY=your_meta_compatible_api_key_here
-MODEL_NAME=llama-3.3-70b-versatile
+PROD_MODEL_BASE_URL="https://api.meta.ai/v1"
+PROD_MODEL_API_KEY="..."                        # or META_API_KEY
 ```
-*(If no API key is provided, SentinelOS automatically activates its deterministic local reasoning engine, guaranteeing complete functionality and test execution offline).*
 
-### 3. Launch SentinelOS
+The sidebar shows the live model, or "Offline fallback" when no key is set.
 
-Start backend and desktop frontend simultaneously:
+### 3. Launch
 
 ```bash
 ./scripts/start_all.sh
 ```
 
-- **Desktop UI**: [http://127.0.0.1:5173](http://127.0.0.1:5173)
-- **Local Security API**: [http://127.0.0.1:8000](http://127.0.0.1:8000)
-- **API Documentation**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- UI: http://127.0.0.1:5173
+- API: http://127.0.0.1:8000 (OpenAPI docs at `/docs`)
+
+---
+
+## Protect Claude Code with AgentFence
+
+With SentinelOS running, add this to `.claude/settings.json` in your project (or `~/.claude/settings.json`):
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Write|Edit|MultiEdit|NotebookEdit|Grep|Glob|Bash",
+        "hooks": [{ "type": "command", "command": "python3 /absolute/path/to/sential/scripts/agentfence_hook.py" }]
+      }
+    ]
+  }
+}
+```
+
+The **AgentFence & Audit** tab shows this snippet with your real path filled in. Then ask Claude Code to `cat .env` inside a registered workspace. The call is denied, the reason is shown to the agent, and a live toast appears in the SentinelOS UI.
+
+- Paths outside any registered workspace are always allowed.
+- If SentinelOS is not running, the hook allows the call and prints a warning. Set `SENTINEL_FAIL_CLOSED=1` to deny instead.
 
 ---
 
 ## 3-Minute Demo Journey
 
-Follow this sequence to test all features with zero manual code editing:
-
-1. **Open Dashboard**: Visit `http://127.0.0.1:5173`. Notice the `SentinelOS Security Lab` workspace is pre-selected and all scanners are verified.
-2. **Run Autonomous Audit**: Click the **Run Autonomous Audit** button in the header.
-3. **Watch Orchestration**: In the **Investigation Center**, watch LangGraph execute discovery, planning, Gitleaks, Semgrep, OSV-Scanner, and Prompt Shield.
-4. **Inspect Findings**: Open the **Findings** tab to view concrete evidence for the hardcoded secret, SQL injection, and vulnerable `urllib3`.
-5. **Explore Attack Paths**: Open **Attack Paths** to inspect the ThreatLens graph mapping the exploit chain from `/api/users/search` to the database.
-6. **Apply Patch & Verify**: Open **Fix & Verify**, review the proposed unified diff for the SQL injection in `app.py`, click **Apply Patch to Workspace**, and then click **Run Verification & Tests**. The Verification Engine reruns Semgrep and pytest, confirming **VERIFIED FIXED**.
-7. **Trigger Policy Denial (Scenario E)**: Click **Test Policy Denial** in the top header. AgentFence immediately intercepts the unauthorized write to `protected_admin_keys.json` with a hard **DENY**.
-8. **Reset Demo**: Click **Reset Lab** to restore the testbed to its initial vulnerable state.
+1. **Connect**: open the UI and choose *Scan Security Lab*, or paste a public repo URL into *Clone & Scan*.
+2. **Watch the investigation**: the Scan Timeline shows each step with the model that served it (e.g. `planner: muse-spark`), every scanner run, and the adaptive dataflow trace.
+3. **Findings and Attack Paths**: real Gitleaks/Semgrep/OSV evidence and a ThreatLens graph that separates confirmed from inferred edges.
+4. **Fix & Verify**: the patch is tagged `model:muse-wonder-1.0` or `rule-based`. Apply it, then verify. The verdict comes from the re-scan and test comparison, not from the model.
+5. **AgentFence**: with the hook installed, ask Claude Code to read `protected_admin_keys.json` in the Security Lab. It is denied live. *Simulate Blocked Write* shows the same thing without Claude Code.
+6. **Reset Lab** restores the vulnerable demo files.
 
 ---
 
-## Running Automated Tests
-
-Run the backend test suite:
+## Tests
 
 ```bash
-PYTHONPATH=backend backend/.venv/bin/pytest -v backend/tests
+PYTHONPATH=backend backend/.venv/bin/pytest -v backend/tests        # backend suite (runs offline)
+backend/.venv/bin/pytest -v demo_lab/test_suite.py                  # the Security Lab's own tests
 ```
 
-Run the demo lab verification suite:
-
-```bash
-backend/.venv/bin/pytest -v demo_lab/test_suite.py
-```
+Backend tests use `DATABASE_URL` (default `./sentinel.db`). Point it at a scratch file to keep your local data clean.
 
 ---
 
@@ -194,57 +208,43 @@ backend/.venv/bin/pytest -v demo_lab/test_suite.py
 
 ```
 sential/
-├── backend/
-│   ├── app/
-│   │   ├── main.py                     # FastAPI application setup & CORS
-│   │   ├── config.py                   # Pydantic BaseSettings & configuration
-│   │   ├── db/                         # SQLAlchemy 2.0 session & database models
-│   │   ├── schemas/                    # Pydantic v2 schemas
-│   │   ├── api/                        # REST API endpoints & SSE stream
-│   │   ├── core/
-│   │   │   ├── model_gateway.py        # Meta Llama 3.3 client with redaction
-│   │   │   ├── prompts.py              # Versioned structured system prompts
-│   │   │   ├── orchestrator.py         # Stateful LangGraph autonomous workflow
-│   │   │   ├── policy_engine.py        # Deterministic PolicyEngine & boundary checks
-│   │   │   ├── verification_engine.py  # Patch generator, test runner & re-scanner
-│   │   │   ├── audit_service.py        # Append-only audit logger with redaction
-│   │   │   ├── event_bus.py            # SSE real-time pub/sub
-│   │   │   └── agent_fence.py          # AI coding tool gatekeeper
-│   │   └── tools/                      # Tool execution service (Gitleaks, Semgrep, OSV)
-│   ├── tests/                          # 12 automated test suites
-│   ├── requirements.txt
-│   └── run.py
-├── frontend/
-│   ├── src/
-│   │   ├── App.tsx                     # Main desktop application coordinator
-│   │   ├── components/                 # Reusable UI components (DiffViewer, GraphViewer)
-│   │   ├── pages/                      # 10 complete screens
-│   │   └── types/                      # TypeScript schemas
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── tailwind.config.js
-├── demo_lab/                           # SentinelOS Security Lab (Isolated Demo Target)
-│   ├── app.py                          # Controlled SQL injection & prompt endpoint
-│   ├── config.py                       # Hardcoded synthetic demo key
-│   ├── requirements.txt                # Documented vulnerable package
-│   ├── protected_admin_keys.json       # Scenario E protected file
-│   ├── test_suite.py                   # Automated verification tests
-│   └── reset.py                        # Deterministic 1-click reset script
-├── scripts/
-│   ├── setup.sh                        # Automated environment setup
-│   ├── start_all.sh                    # Dual-service launcher
-│   └── reset_demo.sh                   # Demo lab reset script
-├── docs/
-│   ├── architecture.md                 # System architecture specification
-│   ├── demo_script.md                  # 3-minute hackathon demo script
-│   └── hackathon_features.md           # Original contributions & limitations
-├── docker-compose.yml
-├── .env.example
-└── README.md
+├── backend/app/
+│   ├── api/endpoints/       # REST + SSE (workspaces incl. /clone, investigations, shield incl. /hooks/claude-code, ...)
+│   ├── core/
+│   │   ├── orchestrator.py        # sequential investigation state machine
+│   │   ├── model_gateway.py       # OpenAI-compatible client, per-task model routing, redaction, offline fallback
+│   │   ├── prompts.py             # versioned JSON-only prompts
+│   │   ├── policy_engine.py       # deterministic ALLOW/DENY/REQUIRE_APPROVAL
+│   │   ├── agent_fence.py         # agent-facing wrapper + Claude Code hook evaluation
+│   │   ├── verification_engine.py # propose / apply / verify / rollback
+│   │   ├── tool_registry.py       # policy-gated tool execution
+│   │   ├── audit_service.py       # append-only audit + redaction
+│   │   └── event_bus.py           # in-process SSE pub/sub
+│   └── tools/               # gitleaks, semgrep, osv, prompt shield, AST flow tracer, pytest runner
+├── frontend/src/            # React UI: Overview, Investigations (Timeline / Attack Paths / Fix & Verify / AgentFence & Audit), Findings, Settings
+├── demo_lab/                # intentionally vulnerable target app + reset script
+├── scripts/                 # setup, start_all, reset_demo, agentfence_hook.py
+└── docs/
 ```
 
 ---
 
+## Roadmap / Future Scope
+
+- **Authenticated & multi-file attacks.** Teach the Attack Lab to log in (forge or obtain a token) and chain findings across files, so apps behind auth — not just single-file targets — get a real breach verdict.
+- **More stacks in the sandbox.** Extend auto-boot beyond Python FastAPI/Flask to Node/Express, Django and Go, with Poetry/Pipenv/npm dependency resolution.
+- **CI/CD mode.** A GitHub Action that runs an investigation on every pull request and blocks the merge when a new CRITICAL/HIGH finding is introduced — catching AI-written bugs before they land.
+- **More guarded agents.** Extend the AgentFence hook beyond Claude Code to Cursor, Copilot and other agents, with a shared policy format.
+- **Stronger isolation.** Move from path-based command checks toward a kernel-level sandbox for arbitrary processes.
+
+---
+
+## Limitations
+
+- AgentFence enforces policy on SentinelOS's own tools and on agents that call it, currently Claude Code through its hook. It is not a kernel-level sandbox for arbitrary processes.
+- Bash commands are checked by resolving path-like arguments against protected paths. Shell constructs that build paths dynamically can evade this.
+- The offline rule-based fixer covers only a few common vulnerability shapes. Everything else needs a configured model or a manual fix.
+
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT. See [LICENSE](LICENSE).

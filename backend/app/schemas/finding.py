@@ -30,6 +30,12 @@ class FindingResponse(BaseModel):
     remediation: str
     verification_status: str
     is_suppressed: bool
+    origin_commit: Optional[str] = None
+    origin_author: Optional[str] = None
+    origin_date: Optional[str] = None
+    origin_subject: Optional[str] = None
+    origin_ai_authored: bool = False
+    origin_ai_agent: Optional[str] = None
     created_at: datetime
     evidence_items: List[EvidenceResponse] = Field(default_factory=list)
 

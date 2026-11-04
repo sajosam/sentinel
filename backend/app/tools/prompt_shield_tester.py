@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 from app.tools.base import BaseTool
 from app.schemas.tool import ToolExecutionResult
 from app.core.audit_service import AuditService
+from app.config import get_demo_lab_dir
 
 
 class PromptShieldTesterTool(BaseTool):
@@ -55,14 +56,18 @@ class PromptShieldTesterTool(BaseTool):
         start_time = time.time()
         findings: List[Dict[str, Any]] = []
         raw_output_lines = []
-        endpoint_url = arguments.get("endpoint_url", "http://127.0.0.1:8001/api/ai/chat")
+        endpoint_url = arguments.get("endpoint_url")
+        if not endpoint_url and workspace_path.resolve() == get_demo_lab_dir():
+            # Only the Security Lab's own AI endpoint is probed implicitly; other workspaces need an explicit URL
+            endpoint_url = "http://127.0.0.1:8001/api/ai/chat"
 
         # Test against local demo AI endpoint if running, or evaluate local prompt handlers
         for probe in self.TEST_PROBES:
             probe_passed = True
             observed_response = ""
             try:
-                # Attempt to query the running demo AI endpoint
+                if not endpoint_url:
+                    raise ConnectionError("No AI endpoint configured for this workspace")
                 with httpx.Client(timeout=2.0) as client:
                     resp = client.post(endpoint_url, json={"prompt": probe["payload"]})
                     if resp.status_code == 200:

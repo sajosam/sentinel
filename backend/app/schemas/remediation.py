@@ -23,6 +23,7 @@ class RemediationResponse(BaseModel):
     patch_summary: str
     target_file: str
     status: str
+    generated_by: Optional[str] = ""
     created_at: datetime
     applied_at: Optional[datetime] = None
 
